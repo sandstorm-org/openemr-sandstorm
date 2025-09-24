@@ -1,0 +1,5 @@
+# Ignore Vagrant's working files
+.sandstorm/.vagrant
+
+# Vagrant sometimes generates log files:
+*.log

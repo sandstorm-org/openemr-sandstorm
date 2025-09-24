@@ -1,0 +1,27 @@
+--- 50-server.cnf.orig	2025-09-24 11:10:12.692079677 +0000
++++ 50-server.cnf	2025-09-24 11:19:16.175193826 +0000
+@@ -16,7 +16,10 @@
+ pid-file                = /run/mysqld/mysqld.pid
+ basedir                 = /usr
+ #datadir                 = /var/lib/mysql
+-#tmpdir                  = /tmp
++tmpdir                  = /var/tmp
++
++# Disable loading data files into the server
++secure_file_priv = ""
+ 
+ # Broken reverse DNS slows down connections considerably and name resolve is
+ # safe to skip if there are no "host by domain name" access grants
+@@ -105,6 +108,12 @@
+ # https://mariadb.com/kb/en/innodb-system-variables/#innodb_buffer_pool_size
+ #innodb_buffer_pool_size = 8G
+ 
++# Set the transaction log file to the minimum allowed size to save disk space.
++innodb_log_file_size = 1048576
++
++# Set the main data file to grow by 1MB at a time, rather than 8MB at a time.
++innodb_autoextend_increment = 1
++
+ # this is only for embedded server
+ [embedded]
+ 

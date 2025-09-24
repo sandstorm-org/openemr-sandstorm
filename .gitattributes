@@ -1,0 +1,6 @@
+# These shell scripts need LF line endings.
+.sandstorm/environment text eol=lf
+.sandstorm/*.sh text eol=lf
+
+# Please do not mess with the patch files.
+patches/** test eol=lf

@@ -1,0 +1,11 @@
+# Directories, absolute or relative to this directory
+APP_DIR=/opt/app
+DOWNLOADS_DIR=${APP_DIR}/downloads
+PATCHES_DIR=${APP_DIR}/patches
+
+# Open-EMR
+OPENEMR_VERSION=7.0.3
+OPENEMR_ARCHIVE=openemr-${OPENEMR_VERSION}.tar.gz
+OPENEMR_ARCHIVE_DIR=openemr-${OPENEMR_VERSION}
+OPENEMR_OPT_DIR=/opt/${OPENEMR_ARCHIVE_DIR}
+OPENEMR_URL=https://downloads.sourceforge.net/project/openemr/OpenEMR%20Current/${OPENEMR_VERSION}/${OPENEMR_ARCHIVE}?viasf=1
