@@ -1,3 +1,6 @@
+# Ignore downloaded files
+downloads/*.tar.gz
+
 # Ignore Vagrant's working files
 .sandstorm/.vagrant
 
