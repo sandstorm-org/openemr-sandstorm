@@ -28,5 +28,9 @@ set -euo pipefail
 
 # By default, this script does nothing.  You'll have to modify it as
 # appropriate for your application.
-cd /opt/app
+
+script_dir="$(cd "$(dirname "$0")" && pwd)"
+. "${script_dir}/environment"
+
+
 exit 0
