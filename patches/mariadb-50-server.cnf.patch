@@ -17,7 +17,7 @@
  #innodb_buffer_pool_size = 8G
  
 +# Set the transaction log file to the minimum allowed size to save disk space.
-+innodb_log_file_size = 1048576
++innodb_log_file_size = 4194304
 +
 +# Set the main data file to grow by 1MB at a time, rather than 8MB at a time.
 +innodb_autoextend_increment = 1
