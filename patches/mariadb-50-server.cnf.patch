@@ -12,7 +12,18 @@
  
  # Broken reverse DNS slows down connections considerably and name resolve is
  # safe to skip if there are no "host by domain name" access grants
-@@ -105,6 +108,12 @@
+-#skip-name-resolve
++skip-name-resolve
+ 
+ # Instead of skip-networking the default is now to listen only on
+ # localhost which is more compatible and is not less secure.
+-bind-address            = 127.0.0.1
++#bind-address            = 127.0.0.1
++skip-networking
+ 
+ #
+ # * Fine Tuning
+@@ -105,6 +109,12 @@
  # https://mariadb.com/kb/en/innodb-system-variables/#innodb_buffer_pool_size
  #innodb_buffer_pool_size = 8G
  
