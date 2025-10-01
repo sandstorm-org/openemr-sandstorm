@@ -28,7 +28,7 @@ script_dir="$(cd "$(dirname "$0")" && pwd)"
 
 # Install Open-EMR dependencies
 export DEBIAN_FRONTEND=noninteractive
-apt-get install --yes apache2 libapache2-mod-php libtiff-tools php php-mysql php-cli php-gd php-xml php-curl php-soap php-json imagemagick php-mbstring php-zip php-ldap php-intl mariadb-server
+apt-get install --yes apache2 build-essential imagemagick libapache2-mod-php libtiff-tools mariadb-server php php-mysql php-cli php-gd php-xml php-curl php-soap php-json php-mbstring php-zip php-ldap php-intl
 
 # Install development tools
 apt-get install --yes patch

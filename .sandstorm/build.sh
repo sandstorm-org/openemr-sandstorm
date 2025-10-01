@@ -20,4 +20,10 @@ set -euo pipefail
 # By default, this script does nothing.  You'll have to modify it as
 # appropriate for your application.
 cd /opt/app
+
+# Build and install utilities
+make -C /opt/app/util all
+sudo make -C /opt/app/util install
+make -C /opt/app/util clean
+
 exit 0
