@@ -1,0 +1,11 @@
+--- ports.conf.orig	2025-10-01 09:51:36.977543684 +0000
++++ ports.conf	2025-10-01 09:51:45.405595733 +0000
+@@ -2,7 +2,7 @@
+ # have to change the VirtualHost statement in
+ # /etc/apache2/sites-enabled/000-default.conf
+ 
+-Listen 80
++Listen 8000
+ 
+ <IfModule ssl_module>
+ 	Listen 443

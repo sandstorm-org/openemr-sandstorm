@@ -1,7 +1,11 @@
 --- 50-server.cnf.orig	2025-09-24 11:10:12.692079677 +0000
-+++ 50-server.cnf	2025-09-24 11:19:16.175193826 +0000
-@@ -16,7 +16,10 @@
- pid-file                = /run/mysqld/mysqld.pid
++++ 50-server.cnf	2025-10-01 08:53:25.490349874 +0000
+@@ -13,18 +13,22 @@
+ #
+ 
+ #user                    = mysql
+-pid-file                = /run/mysqld/mysqld.pid
++pid-file                = /var/run/mysqld/mysqld.pid
  basedir                 = /usr
  #datadir                 = /var/lib/mysql
 -#tmpdir                  = /tmp

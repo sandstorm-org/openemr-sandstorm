@@ -28,7 +28,7 @@ script_dir="$(cd "$(dirname "$0")" && pwd)"
 
 # Install Open-EMR dependencies
 export DEBIAN_FRONTEND=noninteractive
-apt-get install --yes apache2 build-essential imagemagick libapache2-mod-php libtiff-tools mariadb-server php php-mysql php-cli php-gd php-xml php-curl php-soap php-json php-mbstring php-zip php-ldap php-intl
+apt-get install --yes apache2 build-essential imagemagick libapache2-mod-php libnss-wrapper libtiff-tools mariadb-server php php-mysql php-cli php-gd php-xml php-curl php-soap php-json php-mbstring php-zip php-ldap php-intl
 
 # Install development tools
 apt-get install --yes patch
@@ -64,8 +64,13 @@ a2enmod rewrite
 a2dismod reqtimeout
 a2dismod status
 a2dissite 000-default
-patch ${APACHE_SITES_DIR}/openemr.conf ${PATCHES_DIR}/openemr.conf.patch
+patch ${APACHE_SITES_DIR}/openemr.conf ${PATCHES_DIR}/apache2-openemr.conf.patch
+patch ${APACHE_CONF_DIR}/global-server-name.conf ${PATCHES_DIR}/apache2-global-server-name.conf.patch
+patch ${APACHE_ETC_DIR}/ports.conf ${PATCHES_DIR}/apache2-ports.conf.patch
+a2enconf global-server-name
+a2ensite openemr
 
 # Update MariaDB configuration
+patch ${MARIADB_HOME_DIR}/mariadb.cnf "${PATCHES_DIR}/mariadb-mariadb.cnf.patch"
 patch ${MARIADB_CONF_D_DIR}/50-server.cnf "${PATCHES_DIR}/mariadb-50-server.cnf.patch"
 exit 0

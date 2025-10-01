@@ -32,5 +32,51 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "$0")" && pwd)"
 . "${script_dir}/environment"
 
+wait_for() {
+	local service=$1
+	local file=$2
+	while [ ! -e "$file" ]; do
+		echo "waiting for $service to be available at $file."
+		sleep 0.1
+	done
+}
+
+mkdir --parents /var/lib/mysql
+#mkdir --parents /var/lib/php/sessions
+
+# TODO: Rotate logs
+mkdir --parents /var/log/apache2
+
+rm -rf /var/run
+mkdir --parents /var/run/apache2
+mkdir --parents /var/run/mysqld
+#mkdir --parents /var/run/php
+
+rm -rf /var/tmp
+mkdir --parents /var/tmp
+
+if [ ! -d ${MARIADB_DATA_DIR}/mysql ]; then
+	# Create mysql tables in MySQL
+	# TODO: Can we remove the --force?
+	HOME=${MARIADB_HOME_DIR} /usr/bin/mariadb-install-db --force
+fi
+
+# Run MariaDB
+HOME=${MARIADB_HOME_DIR} /usr/sbin/mariadbd --skip-grant-tables &
+wait_for mariadb /var/run/mysqld/mysqld.sock
+
+# Apache 2 HTTP server wants our user to have a username.
+# Create temporary passwd and group databases.
+EGID=$(getegid)
+
+PASSWD_FILE=$(mktemp)
+echo "${OPENEMR_USER}:x:${EUID}:${EGID}:Open-EMR user,,,:/tmp:/usr/bin/bash" > "$PASSWD_FILE"
+GROUP_FILE=$(mktemp)
+echo "${OPENEMR_USER}:x:${EGID}:" > "$GROUP_FILE"
+HOSTS_FILE=$(mktemp)
+echo "127.0.0.1 localhost sandbox" >> "$HOSTS_FILE"
+echo "::1 localhost sandbox" >> "$HOSTS_FILE"
+
+LD_PRELOAD=libnss_wrapper.so NSS_WRAPPER_PASSWD="$PASSWD_FILE" NSS_WRAPPER_GROUP="$GROUP_FILE" NSS_WRAPPER_HOSTS="$HOSTS_FILE" APACHE_LOG_DIR=/var/log/apache2 APACHE_PID_FILE=/var/run/apache2/apache2.pid APACHE_RUN_DIR=/var/run/apache2 APACHE_RUN_GROUP=${OPENEMR_USER} APACHE_RUN_USER=${OPENEMR_USER} /usr/sbin/apache2 -D FOREGROUND
 
 exit 0

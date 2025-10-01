@@ -1,0 +1,11 @@
+--- mariadb.cnf.orig	2025-10-01 08:45:43.579817824 +0000
++++ mariadb.cnf	2025-10-01 08:45:55.451882907 +0000
+@@ -22,7 +22,7 @@
+ [client-server]
+ # Port or socket location where to connect
+ # port = 3306
+-socket = /run/mysqld/mysqld.sock
++socket = /var/run/mysqld/mysqld.sock
+ 
+ # Import all .cnf files from configuration directory
+ !includedir /etc/mysql/conf.d/
