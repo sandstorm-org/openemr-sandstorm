@@ -1,6 +1,6 @@
 --- /dev/null	2025-10-01 07:13:38.723999985 +0000
-+++ /etc/apache2/sites-available/openemr.conf	2025-10-01 10:12:36.561323266 +0000
-@@ -0,0 +1,34 @@
++++ /etc/apache2/sites-available/openemr.conf	2025-10-01 16:31:19.735341211 +0000
+@@ -0,0 +1,53 @@
 +<VirtualHost *:8000>
 +	# The ServerName directive sets the request scheme, hostname and port that
 +	# the server uses to identify itself. This is used when creating
@@ -31,7 +31,26 @@
 +	# after it has been globally disabled with "a2disconf".
 +
 +	<Directory /opt/openemr-7.0.3/openemr>
++		Options -Indexes
 +		AllowOverride None
 +		Require all granted
++	</Directory>
++	<Directory /opt/openemr-7.0.3/openemr/interface/modules/zend_modules/public">
++		RewriteEngine On
++		RewriteCond %{REQUEST_FILENAME} -s [OR]
++		RewriteCond %{REQUEST_FILENAME} -l [OR]
++		RewriteCond %{REQUEST_FILENAME} -d
++		RewriteRule ^.*$ - [NC,L]
++		RewriteRule ^.*$ /openemr/interface/modules/zend_modules/public/index.php [NC,L]
++	</Directory>
++	<Directory /opt/openemr-7.0.3/openemr/portal/patient">
++		RewriteEngine On
++		RewriteCond %{REQUEST_FILENAME} !-f
++		RewriteCond %{REQUEST_FILENAME} !-d
++		RewriteCond %{REQUEST_FILENAME} !-l
++		RewriteRule ^.*$ /openemr/portal/patient/index.php?_REWRITE_COMMAND=$1 [QSA,L]
++	</Directory>
++	<Directory "/var/openemr-7.0.3/openemr/sites/*/documents">
++		Require all denied
 +	</Directory>
 +</VirtualHost>
