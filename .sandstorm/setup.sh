@@ -52,6 +52,12 @@ printf "Extracting Open-EMR\n"
 mkdir --parents "${OPENEMR_OPT_DIR}/openemr"
 cd "${OPENEMR_OPT_DIR}/openemr"
 tar --strip-components=1 -zxf "${DOWNLOADS_DIR}/${OPENEMR_ARCHIVE}"
+# Remove this writable file and link it to /var
+rm ${OPENEMR_OPT_DIR}/openemr/sites/default/sqlconf.php
+ln -s ${OPENEMR_VAR_DIR}/openemr/sites/default/sqlconf.php ${OPENEMR_OPT_DIR}/openemr/sites/default/sqlconf.php
+# Put the site documents in /var
+mv ${OPENEMR_OPT_DIR}/openemr/sites/default/documents ${OPENEMR_OPT_DIR}/documents
+ln -s ${OPENEMR_VAR_DIR}/openemr/sites/default/documents ${OPENEMR_OPT_DIR}/openemr/sites/default/documents
 
 # Stop and disable services.  Sandstorm will run them.
 systemctl stop apache2

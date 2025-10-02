@@ -41,8 +41,53 @@ wait_for() {
 	done
 }
 
+# Open-EMR wants to modify some files.
+# Those files will go in /var/openemr-7.0.3/openemr for now.
+mkdir --parents ${OPENEMR_VAR_DIR}/openemr/sites/default
+if [ ! -f "${OPENEMR_VAR_DIR}/openemr/sites/default/sqlconf.php" ]; then
+	cat > "${OPENEMR_VAR_DIR}/openemr/sites/default/sqlconf.php" << EOL
+<?php
+//  OpenEMR
+//  MySQL Config
+
+global \$disable_utf8_flag;
+\$disable_utf8_flag = false;
+
+\$host   = 'localhost';
+\$port   = '3306';
+\$login  = 'openemr';
+\$pass   = 'openemr';
+\$dbase  = 'openemr';
+\$db_encoding = 'utf8mb4';
+
+\$sqlconf = array();
+global \$sqlconf;
+\$sqlconf["host"]= \$host;
+\$sqlconf["port"] = \$port;
+\$sqlconf["login"] = \$login;
+\$sqlconf["pass"] = \$pass;
+\$sqlconf["dbase"] = \$dbase;
+\$sqlconf["db_encoding"] = \$db_encoding;
+
+//////////////////////////
+//////////////////////////
+//////////////////////////
+//////DO NOT TOUCH THIS///
+\$config = 0; /////////////
+//////////////////////////
+//////////////////////////
+//////////////////////////
+EOL
+fi
+chmod 0666 ${OPENEMR_VAR_DIR}/openemr/sites/default/sqlconf.php
+
+if [ ! -d "${OPENEMR_VAR_DIR}/openemr/sites/default/documents" ]; then
+	mkdir --parents ${OPENEMR_VAR_DIR}/openemr/sites/default/documents
+	cp -R "${OPENEMR_OPT_DIR}/documents" "${OPENEMR_VAR_DIR}/openemr/sites/default/documents"
+fi
+
 mkdir --parents /var/lib/mysql
-#mkdir --parents /var/lib/php/sessions
+mkdir --parents /var/lib/php/sessions
 
 # TODO: Rotate logs
 mkdir --parents /var/log/apache2
