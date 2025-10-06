@@ -54,7 +54,9 @@ global \$disable_utf8_flag;
 \$disable_utf8_flag = false;
 
 \$host   = 'localhost';
-\$port   = '3306';
+//\$port   = '3306';
+\$port   = '0';
+\$socket = '/var/run/mysqld/mysqld.sock';
 \$login  = 'openemr';
 \$pass   = 'openemr';
 \$dbase  = 'openemr';
@@ -64,6 +66,7 @@ global \$disable_utf8_flag;
 global \$sqlconf;
 \$sqlconf["host"]= \$host;
 \$sqlconf["port"] = \$port;
+\$sqlconf["socket"] = \$socket;
 \$sqlconf["login"] = \$login;
 \$sqlconf["pass"] = \$pass;
 \$sqlconf["dbase"] = \$dbase;
@@ -73,7 +76,7 @@ global \$sqlconf;
 //////////////////////////
 //////////////////////////
 //////DO NOT TOUCH THIS///
-\$config = 0; /////////////
+\$config = 1; /////////////
 //////////////////////////
 //////////////////////////
 //////////////////////////
@@ -83,7 +86,7 @@ chmod 0666 ${OPENEMR_VAR_DIR}/openemr/sites/default/sqlconf.php
 
 if [ ! -d "${OPENEMR_VAR_DIR}/openemr/sites/default/documents" ]; then
 	mkdir --parents ${OPENEMR_VAR_DIR}/openemr/sites/default/documents
-	cp -R "${OPENEMR_OPT_DIR}/documents" "${OPENEMR_VAR_DIR}/openemr/sites/default/documents"
+	cp --no-preserve=ownership --recursive "${OPENEMR_OPT_DIR}/documents" "${OPENEMR_VAR_DIR}/openemr/sites/default"
 fi
 
 mkdir --parents /var/lib/mysql
@@ -110,6 +113,16 @@ fi
 HOME=${MARIADB_HOME_DIR} /usr/sbin/mariadbd --skip-grant-tables &
 wait_for mariadb /var/run/mysqld/mysqld.sock
 
+# Load data into the database if the Open-EMR database does not exist.
+HAS_DATABASE=$(/usr/bin/mysql "--user=${OPENEMR_DATABASE_USER}" "--execute=USE ${OPENEMR_DATABASE}" && echo "YES" || echo "NO")
+if [ "${HAS_DATABASE}" = "NO" ]; then
+	echo "Open-EMR database not found."
+	/usr/bin/mysql --user=root < "${SQL_DIR}/create_database.sql"
+	[ $? = 0 ] && echo "Database created."
+	/usr/bin/mysql "--user=${OPENEMR_DATABASE_USER}" "${OPENEMR_DATABASE}" < "${SQL_DIR}/initial_data.sql"
+	[ $? = 0 ] && echo "Initial data loaded."
+fi
+
 # Apache 2 HTTP server wants our user to have a username.
 # Create temporary passwd and group databases.
 EGID=$(getegid)
@@ -122,6 +135,7 @@ HOSTS_FILE=$(mktemp)
 echo "127.0.0.1 localhost sandbox" >> "$HOSTS_FILE"
 echo "::1 localhost sandbox" >> "$HOSTS_FILE"
 
+echo "Running Apache"
 LD_PRELOAD=libnss_wrapper.so NSS_WRAPPER_PASSWD="$PASSWD_FILE" NSS_WRAPPER_GROUP="$GROUP_FILE" NSS_WRAPPER_HOSTS="$HOSTS_FILE" APACHE_LOG_DIR=/var/log/apache2 APACHE_PID_FILE=/var/run/apache2/apache2.pid APACHE_RUN_DIR=/var/run/apache2 APACHE_RUN_GROUP=${OPENEMR_USER} APACHE_RUN_USER=${OPENEMR_USER} /usr/sbin/apache2 -D FOREGROUND
 
 exit 0
