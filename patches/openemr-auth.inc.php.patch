@@ -1,0 +1,22 @@
+--- library/auth.inc.php.orig	2025-10-06 17:02:20.086799373 +0000
++++ library/auth.inc.php	2025-10-06 18:54:19.853911470 +0000
+@@ -21,6 +21,19 @@
+ use OpenEMR\Common\Session\SessionTracker;
+ use OpenEMR\Services\UserService;
+ 
++if (getenv('SANDSTORM') == '1') {
++    // TODO: Where will we set the language if we have no login screen?
++    $_SESSION['language_choice'] = 1;
++    $_SESSION['language_direction'] = getLanguageDir($_SESSION['language_choice']);
++
++    $login_success = AuthUtils::verifySandstormAuth();
++
++    if ($login_success !== true) {
++        die("Open-EMR on Sandstorm does not support anonymous users");
++    }
++    return;
++}
++
+ $incoming_site_id = '';
+ // This is the conditional that ensures that the submission has the required parameters to attempt a login
+ if (

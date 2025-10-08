@@ -1,0 +1,38 @@
+--- src/Common/Auth/AuthUtils.php.orig	2025-10-06 18:45:40.934070010 +0000
++++ src/Common/Auth/AuthUtils.php	2025-10-06 19:14:21.160927839 +0000
+@@ -1371,6 +1371,35 @@
+     }
+ 
+     /**
++     */
++    public static function verifySandstormAuth()
++    {
++        $headers = getallheaders();
++
++        $displayNameEncoded = $headers['X-Sandstorm-Username'];
++        if (!empty($displayNameEncoded)) {
++            $displayName = urldecode($displayNameEncoded);
++        } else {
++            $displayName = '';
++        }
++        $permissionsString = $headers['X-Sandstorm-Permissions'];
++        if (!empty($permissionsString)) {
++            $permissions = explode(',', $permissionsString);
++        } else {
++            $permissions = [];
++        }
++        $pictureUrl = $headers['X-Sandstorm-User-Picture'];
++        $preferredHandle = $headers['X-Sandstorm-Preferred-Handle'];
++        $pronouns = $headers['X-Sandstorm-User-Pronouns'];
++        $sessionType = $headers['X-Sandstorm-Session-Type'];
++        $sessionId = $headers['X-Sandstorm-Session-Id'];
++        $tabId = $headers['X-Sandstorm-Tab-Id'];
++        $userId = $headers['X-Sandstorm-User-Id'];
++
++        return true;
++    }
++
++    /**
+      * Given an associative array representing the user, set the session variables
+      * @param $username
+      * @param $hash
