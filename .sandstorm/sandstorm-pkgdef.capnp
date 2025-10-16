@@ -163,74 +163,474 @@ const pkgdef :Spk.PackageDefinition = (
   # not have been detected as a dependency during `spk dev`. If you list
   # a directory here, its entire contents will be included recursively.
 
-  #bridgeConfig = (
-  #  # Used for integrating permissions and roles into the Sandstorm shell
-  #  # and for sandstorm-http-bridge to pass to your app.
-  #  # Uncomment this block and adjust the permissions and roles to make
-  #  # sense for your app.
-  #  # For more information, see high-level documentation at
-  #  # https://docs.sandstorm.io/en/latest/developing/auth/
-  #  # and advanced details in the "BridgeConfig" section of
-  #  # https://github.com/sandstorm-io/sandstorm/blob/master/src/sandstorm/package.capnp
-  #  viewInfo = (
-  #    # For details on the viewInfo field, consult "ViewInfo" in
-  #    # https://github.com/sandstorm-io/sandstorm/blob/master/src/sandstorm/grain.capnp
-  #
-  #    permissions = [
-  #    # Permissions which a user may or may not possess.  A user's current
-  #    # permissions are passed to the app as a comma-separated list of `name`
-  #    # fields in the X-Sandstorm-Permissions header with each request.
-  #    #
-  #    # IMPORTANT: only ever append to this list!  Reordering or removing fields
-  #    # will change behavior and permissions for existing grains!  To deprecate a
-  #    # permission, or for more information, see "PermissionDef" in
-  #    # https://github.com/sandstorm-io/sandstorm/blob/master/src/sandstorm/grain.capnp
-  #      (
-  #        name = "editor",
-  #        # Name of the permission, used as an identifier for the permission in cases where string
-  #        # names are preferred.  Used in sandstorm-http-bridge's X-Sandstorm-Permissions HTTP header.
-  #
-  #        title = (defaultText = "editor"),
-  #        # Display name of the permission, e.g. to display in a checklist of permissions
-  #        # that may be assigned when sharing.
-  #
-  #        description = (defaultText = "grants ability to modify data"),
-  #        # Prose describing what this role means, suitable for a tool tip or similar help text.
-  #      ),
-  #    ],
-  #    roles = [
-  #      # Roles are logical collections of permissions.  For instance, your app may have
-  #      # a "viewer" role and an "editor" role
-  #      (
-  #        title = (defaultText = "editor"),
-  #        # Name of the role.  Shown in the Sandstorm UI to indicate which users have which roles.
-  #
-  #        permissions  = [true],
-  #        # An array indicating which permissions this role carries.
-  #        # It should be the same length as the permissions array in
-  #        # viewInfo, and the order of the lists must match.
-  #
-  #        verbPhrase = (defaultText = "can make changes to the document"),
-  #        # Brief explanatory text to show in the sharing UI indicating
-  #        # what a user assigned this role will be able to do with the grain.
-  #
-  #        description = (defaultText = "editors may view all site data and change settings."),
-  #        # Prose describing what this role means, suitable for a tool tip or similar help text.
-  #      ),
-  #      (
-  #        title = (defaultText = "viewer"),
-  #        permissions  = [false],
-  #        verbPhrase = (defaultText = "can view the document"),
-  #        description = (defaultText = "viewers may view what other users have written."),
-  #      ),
-  #    ],
-  #  ),
-  #  #apiPath = "/api",
-  #  # Apps can export an API to the world.  The API is to be used primarily by Javascript
-  #  # code and native apps, so it can't serve out regular HTML to browsers.  If a request
-  #  # comes in to your app's API, sandstorm-http-bridge will prefix the request's path with
-  #  # this string, if specified.
-  #),
+  bridgeConfig = (
+    # Used for integrating permissions and roles into the Sandstorm shell
+    # and for sandstorm-http-bridge to pass to your app.
+    # Uncomment this block and adjust the permissions and roles to make
+    # sense for your app.
+    # For more information, see high-level documentation at
+    # https://docs.sandstorm.io/en/latest/developing/auth/
+    # and advanced details in the "BridgeConfig" section of
+    # https://github.com/sandstorm-io/sandstorm/blob/master/src/sandstorm/package.capnp
+    viewInfo = (
+      # For details on the viewInfo field, consult "ViewInfo" in
+      # https://github.com/sandstorm-io/sandstorm/blob/master/src/sandstorm/grain.capnp
+
+      permissions = [
+      # Permissions which a user may or may not possess.  A user's current
+      # permissions are passed to the app as a comma-separated list of `name`
+      # fields in the X-Sandstorm-Permissions header with each request.
+      #
+      # IMPORTANT: only ever append to this list!  Reordering or removing fields
+      # will change behavior and permissions for existing grains!  To deprecate a
+      # permission, or for more information, see "PermissionDef" in
+      # https://github.com/sandstorm-io/sandstorm/blob/master/src/sandstorm/grain.capnp
+
+      #
+      # Open-EMR porting note:
+      #
+      # Sandstorm implements a simple access control system: users have roles
+      # and roles grant permissions.
+      #
+      # Open-EMR requires a more complex system.  Users may have multiple roles
+      # and anonymous users are not supported.
+      #
+      # To support all of Open-EMR's functionality, we are passing roles
+      # instead of permissions through X-Sandstorm-Permissions.  In the future,
+      # we hope that Sandstorm will implement a more flexible system (as
+      # capability-based security allows), which will allow us to better
+      # support Open-EMR's needs.
+      #
+        (
+          name = "role:administrator",
+          # Name of the permission, used as an identifier for the permission in cases where string
+          # names are preferred.  Used in sandstorm-http-bridge's X-Sandstorm-Permissions HTTP header.
+
+          title = (
+            defaultText = "Administrator Role",
+            localizations = [
+              (
+                locale = "ru",
+                text = "Роль администратора",
+              ),
+              (
+                locale = "zh",
+                text = "管理员角色",
+              ),
+              (
+                locale = "zh-TW",
+                text = "管理員角色",
+              ),
+            ],
+          ),
+          # Display name of the permission, e.g. to display in a checklist of permissions
+          # that may be assigned when sharing.
+
+          description = (
+            defaultText = "has full control of the application",
+            localizations = [
+              (
+                locale = "ru",
+                text = "имеет полный контроль над приложением",
+              ),
+              (
+                locale = "zh",
+                text = "完全控制应用程序",
+              ),
+              (
+                locale = "zh-TW",
+                text = "完全控制應用程式",
+              ),
+            ],
+          ),
+          # Prose describing what this role means, suitable for a tool tip or similar help text.
+        ),
+        (
+          name = "role:manager",
+          title = (
+            defaultText = "Manager Role",
+            localizations = [
+              (
+                locale = "ru",
+                text = "Роль менеджера",
+              ),
+              (
+                locale = "zh",
+                text = "经理角色",
+              ),
+              (
+                locale = "zh-TW",
+                text = "經理角色",
+              ),
+            ],
+          ),
+          description = (
+            defaultText = "has the access to view and edit all parts of the application",
+            localizations = [
+              (
+                locale = "ru",
+                text = "имеет доступ к просмотру и редактированию всех частей приложения",
+              ),
+              (
+                locale = "zh",
+                text = "有权查看和编辑应用程序的所有部分",
+              ),
+              (
+                locale = "zh-TW",
+                text = "有權查看和編輯應用程式的所有部分",
+              ),
+            ],
+          ),
+        ),
+        (
+          name = "role:back office",
+          title = (
+            defaultText = "Back Office Role",
+            localizations = [
+              (
+                locale = "ru",
+                text = "Роль бэк-офиса",
+              ),
+              (
+                locale = "zh",
+                text = "后台角色",
+              ),
+              (
+                locale = "zh-TW",
+                text = "後台角色",
+              ),
+            ],
+          ),
+          description = (
+            defaultText = "has access to business and financial information",
+            localizations = [
+              (
+                locale = "ru",
+                text = "имеет доступ к деловой и финансовой информации",
+              ),
+              (
+                locale = "zh",
+                text = "可以访问商业和财务信息",
+              ),
+              (
+                locale = "zh-TW",
+                text = "可以存取商業和財務信息",
+              ),
+            ],
+          ),
+        ),
+        (
+          name = "role:front office",
+          title = (
+            defaultText = "Front Office Role",
+            localizations = [
+              (
+                locale = "ru",
+                text = "Роль фронт-офиса",
+              ),
+              (
+                locale = "zh",
+                text = "前台角色",
+              ),
+              (
+                locale = "zh-TW",
+                text = "前台角色",
+              ),
+            ],
+          ),
+          description = (
+            defaultText = "has access to customer and financial information and some medical records",
+            localizations = [
+              (
+                locale = "ru",
+                text = "имеет доступ к информации о клиентах и финансовой информации, а также к некоторым медицинским записям",
+              ),
+              (
+                locale = "zh",
+                text = "可以访问客户和财务信息以及一些医疗记录",
+              ),
+              (
+                locale = "zh-TW",
+                text = "可以存取客戶和財務資訊以及一些醫療記錄",
+              ),
+            ],
+          ),
+        ),
+        (
+          name = "role:clinician",
+          title = (
+            defaultText = "Clinician Role",
+            localizations = [
+              (
+                locale = "ru",
+                text = "Роль клинициста",
+              ),
+              (
+                locale = "zh",
+                text = "临床医生角色",
+              ),
+              (
+                locale = "zh-TW",
+                text = "臨床醫師角色",
+              ),
+            ],
+          ),
+          description = (
+            defaultText = "has access to customer information and medical records",
+            localizations = [
+              (
+                locale = "ru",
+                text = "имеет возможность доступа к информации о клиентах и медицинским записям",
+              ),
+              (
+                locale = "zh",
+                text = "能够访问客户信息和医疗记录",
+              ),
+              (
+                locale = "zh-TW",
+                text = "能夠存取客戶資訊和醫療記錄",
+              ),
+            ],
+          ),
+        ),
+      ],
+      roles = [
+        # Roles are logical collections of permissions.  For instance, your app may have
+        # a "viewer" role and an "editor" role
+        (
+          title = (
+            defaultText = "Administrator",
+            localizations = [
+              (
+                locale = "ru",
+                text = "Администратор",
+              ),
+              (
+                locale = "zh",
+                text = "管理员",
+              ),
+              (
+                locale = "zh-TW",
+                text = "管理員",
+              ),
+            ],
+          ),
+          # Name of the role.  Shown in the Sandstorm UI to indicate which users have which roles.
+
+          permissions  = [
+            true,  # role:administrator
+            false, # role:manager
+            false, # role:back office
+            false, # role:front office
+            false, # role:clinician
+          ],
+          # An array indicating which permissions this role carries.
+          # It should be the same length as the permissions array in
+          # viewInfo, and the order of the lists must match.
+
+          verbPhrase = (
+            defaultText = "has full control of the application",
+            localizations = [
+              (
+                locale = "ru",
+                text = "имеет полный контроль над приложением",
+              ),
+              (
+                locale = "zh",
+                text = "完全控制应用程序",
+              ),
+              (
+                locale = "zh-TW",
+                text = "完全控制應用程式",
+              ),
+            ],
+          ),
+          # Brief explanatory text to show in the sharing UI indicating
+          # what a user assigned this role will be able to do with the grain.
+
+          description = (defaultText = "editors may view all site data and change settings."),
+          # Prose describing what this role means, suitable for a tool tip or similar help text.
+        ),
+        (
+          title = (
+            defaultText = "Manager",
+            localizations = [
+              (
+                locale = "ru",
+                text = "Менеджер",
+              ),
+              (
+                locale = "zh",
+                text = "经理",
+              ),
+              (
+                locale = "zh-TW",
+                text = "經理",
+              ),
+            ],
+          ),
+          permissions  = [
+            false, # role:administrator
+            true,  # role:manager
+            false, # role:back office
+            false, # role:front office
+            false, # role:clinician
+          ],
+          verbPhrase = (
+            defaultText = "has the access to view and edit all parts of the application",
+            localizations = [
+              (
+                locale = "ru",
+                text = "имеет доступ к просмотру и редактированию всех частей приложения",
+              ),
+              (
+                locale = "zh",
+                text = "有权查看和编辑应用程序的所有部分",
+              ),
+              (
+                locale = "zh-TW",
+                text = "有權查看和編輯應用程式的所有部分",
+              ),
+            ],
+          ),
+        ),
+        (
+          title = (
+            defaultText = "Back Office",
+            localizations = [
+              (
+                locale = "ru",
+                text = "Бэк-офис",
+              ),
+              (
+                locale = "zh",
+                text = "后台",
+              ),
+              (
+                locale = "zh-TW",
+                text = "後台",
+              ),
+            ],
+          ),
+          permissions  = [
+            false, # role:administrator
+            false, # role:manager
+            true,  # role:back office
+            false, # role:front office
+            false, # role:clinician
+          ],
+          verbPhrase = (
+            defaultText = "has access to business and financial information",
+            localizations = [
+              (
+                locale = "ru",
+                text = "имеет доступ к деловой и финансовой информации",
+              ),
+              (
+                locale = "zh",
+                text = "可以访问商业和财务信息",
+              ),
+              (
+                locale = "zh-TW",
+                text = "可以存取商業和財務信息",
+              ),
+            ],
+          ),
+        ),
+        (
+          title = (
+            defaultText = "Front Office",
+            localizations = [
+              (
+                locale = "ru",
+                text = "фронт-офис",
+              ),
+              (
+                locale = "zh",
+                text = "前台",
+              ),
+              (
+                locale = "zh-TW",
+                text = "前台",
+              ),
+            ],
+          ),
+          permissions  = [
+            false, # role:administrator
+            false, # role:manager
+            false, # role:back office
+            true,  # role:front office
+            false, # role:clinician
+          ],
+          verbPhrase= (
+            defaultText = "has access to customer and financial information and some medical records",
+            localizations = [
+              (
+                locale = "ru",
+                text = "имеет доступ к информации о клиентах и финансовой информации, а также к некоторым медицинским записям",
+              ),
+              (
+                locale = "zh",
+                text = "可以访问客户和财务信息以及一些医疗记录",
+              ),
+              (
+                locale = "zh-TW",
+                text = "可以存取客戶和財務資訊以及一些醫療記錄",
+              ),
+            ],
+          ),
+        ),
+        (
+          title = (
+            defaultText = "Clinician",
+            localizations = [
+              (
+                locale = "ru",
+                text = "Клиницист",
+              ),
+              (
+                locale = "zh",
+                text = "临床医生",
+              ),
+              (
+                locale = "zh-TW",
+                text = "臨床醫師",
+              ),
+            ],
+          ),
+          permissions  = [
+            false, # role:administrator
+            false, # role:manager
+            false, # role:back office
+            false, # role:front office
+            true,  # role:clinician
+          ],
+          verbPhrase = (
+            defaultText = "has access to customer information and medical records",
+            localizations = [
+              (
+                locale = "ru",
+                text = "имеет возможность доступа к информации о клиентах и медицинским записям",
+              ),
+              (
+                locale = "zh",
+                text = "能够访问客户信息和医疗记录",
+              ),
+              (
+                locale = "zh-TW",
+                text = "能夠存取客戶資訊和醫療記錄",
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+    #apiPath = "/api",
+    # Apps can export an API to the world.  The API is to be used primarily by Javascript
+    # code and native apps, so it can't serve out regular HTML to browsers.  If a request
+    # comes in to your app's API, sandstorm-http-bridge will prefix the request's path with
+    # this string, if specified.
+  ),
 );
 
 const myCommand :Spk.Manifest.Command = (
