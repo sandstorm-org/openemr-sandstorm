@@ -1,0 +1,12 @@
+--- /opt/openemr-7.0.3/openemr/interface/login/login.php.orig	2025-10-06 19:15:58.024520424 +0000
++++ /opt/openemr-7.0.3/openemr/interface/login/login.php	2025-10-20 10:15:35.949771862 +0000
+@@ -38,7 +38,8 @@
+ use Twig\Error\RuntimeError;
+ use Twig\Error\SyntaxError;
+ 
+-$ignoreAuth = true;
++$ignoreAuth = !getenv('SANDSTORM');
++
+ // Set $sessionAllowWrite to true to prevent session concurrency issues during authorization related code
+ $sessionAllowWrite = true;
+ require_once("../globals.php");

@@ -1,6 +1,11 @@
---- library/auth.inc.php.orig	2025-10-06 17:02:20.086799373 +0000
-+++ library/auth.inc.php	2025-10-06 18:54:19.853911470 +0000
-@@ -21,6 +21,19 @@
+--- /opt/openemr-7.0.3/openemr/library/auth.inc.php.orig	2025-10-06 17:02:20.086799373 +0000
++++ /opt/openemr-7.0.3/openemr/library/auth.inc.php	2025-10-20 10:58:58.294912963 +0000
+@@ -17,10 +17,23 @@
+  */
+ 
+ use OpenEMR\Common\Auth\AuthUtils;
++use OpenEMR\Common\Auth\AuthSandstorm;
+ use OpenEMR\Common\Logging\EventAuditLogger;
  use OpenEMR\Common\Session\SessionTracker;
  use OpenEMR\Services\UserService;
  
@@ -9,11 +14,10 @@
 +    $_SESSION['language_choice'] = 1;
 +    $_SESSION['language_direction'] = getLanguageDir($_SESSION['language_choice']);
 +
-+    $login_success = AuthUtils::verifySandstormAuth();
++    $authSandstorm = new AuthSandstorm();
++    $authSandstorm->dieIfAnonymous();
++    $login_success = true;
 +
-+    if ($login_success !== true) {
-+        die("Open-EMR on Sandstorm does not support anonymous users");
-+    }
 +    return;
 +}
 +
