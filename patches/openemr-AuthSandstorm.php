@@ -69,11 +69,14 @@
 +     */
 +    public function dieIfAnonymous($message = '') {
 +        if (empty($this->userId)) {
-+            if (empty($message)) {
-+                $message = '<div style="display: flex;justify-content: center;height: 100%;"><div style="display: flex;justify-content: center;width: 50%;height: 100%;align-items: center;background-color: #f8f9fa;"><p style="font-size: 1.25rem; font-family: Segoe UI,Roboto;">Please Log In with Sandstorm to use Open-EMR</p></div></div>';
-+            }
-+            die($message);
-+        }
+            $style_block = '<div style="position: absolute;left: 25%;display: flex;justify-content: center;width: 50%;height: 100%;align-items: center;background-color: #f8f9fa;">';
+            $style_text = '<p style="padding: 20px;font-size: 1.25rem; font-family: Segoe UI,Roboto;text-align: center;">';
+            $style_end = '</p></div>';
+            if (empty($message)) {
+                $message = 'Please Log In with Sandstorm to use Open-EMR';
+            }
+            die($style_block . $style_text . $message . $style_end);
+        }
 +    }
 +
 +    /**
