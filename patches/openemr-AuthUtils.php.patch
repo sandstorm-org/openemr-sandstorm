@@ -1,35 +1,164 @@
---- src/Common/Auth/AuthUtils.php.orig	2025-10-06 18:45:40.934070010 +0000
-+++ src/Common/Auth/AuthUtils.php	2025-10-06 19:14:21.160927839 +0000
-@@ -1371,6 +1371,35 @@
+--- /opt/openemr-7.0.3/openemr/src/Common/Auth/AuthUtils.php.orig	2025-10-06 18:45:40.934070010 +0000
++++ /opt/openemr-7.0.3/openemr/src/Common/Auth/AuthUtils.php	2025-10-22 19:06:14.899899102 +0000
+@@ -44,6 +44,7 @@
+ use OpenEMR\Common\Acl\AclExtended;
+ use OpenEMR\Common\Acl\AclMain;
+ use OpenEMR\Common\Auth\AuthHash;
++use OpenEMR\Common\Auth\AuthSandstorm;
+ use OpenEMR\Common\Logging\EventAuditLogger;
+ use OpenEMR\Common\Utils\RandomGenUtils;
+ use OpenEMR\Services\UserService;
+@@ -505,11 +506,10 @@
+      * @param type $newPwd          the new password for the target user
+      *                              - password is passed by reference so that it can be "cleared out" as soon as we are done with it.
+      * @param type $create          Are we creating a new user or
+-     * @param type $insert_sql      SQL to run to create the row in "users" (and generate a new id) when needed.
+-     * @param type $new_username    The username for a new user
++     * @param type $userFormValues  Values used to create the user, if necessary
+      * @return boolean              Was the password successfully updated/created? If false, then $this->errorMessage will tell you why it failed.
+      */
+-    public function updatePassword($activeUser, $targetUser, &$currentPwd, &$newPwd, $create = false, $insert_sql = "", $new_username = null)
++    public function updatePassword($activeUser, $targetUser, &$currentPwd, &$newPwd, $create = false, $userFormValues = [])
+     {
+         if (empty($activeUser) || empty($currentPwd)) {
+             $this->errorMessage = xl("Password update error!");
+@@ -596,9 +596,10 @@
+         // (note that in this case, a random password is prepared for the new user below that is stored in OpenEMR
+         //  and used only for session confirmations; the primary authentication for the new user will be done via
+         //  LDAP)
+-        $ldapDummyPassword = false;
+-        if ($create && ($userInfo === false) && (!empty($new_username)) && (self::useActiveDirectory($new_username))) {
+-            $ldapDummyPassword = true;
++        $validatePassword = true;
++        $newUsername = isset($userFormValues['username']) ? $userFormValues['username'] : '';
++        if ($create && ($userInfo === false) && (!empty($newUsername)) && (self::useActiveDirectory($newUsername))) {
++            $validatePassword = false;
+             $newPwd = RandomGenUtils::produceRandomString(32, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
+             if (empty($newPwd)) {
+                 // Something is seriously wrong with the random generator
+@@ -616,19 +617,19 @@
+         }
+ 
+         // Ensure password is long enough, if this option is on (note LDAP skips this)
+-        if ((!$ldapDummyPassword) && (!$this->testMinimumPasswordLength($newPwd))) {
++        if (($validatePassword) && (!$this->testMinimumPasswordLength($newPwd))) {
+             $this->clearFromMemory($newPwd);
+             return false;
+         }
+ 
+         // Ensure password is not too long (note LDAP skips this)
+-        if ((!$ldapDummyPassword) && (!$this->testMaximumPasswordLength($newPwd))) {
++        if (($validatePassword) && (!$this->testMaximumPasswordLength($newPwd))) {
+             $this->clearFromMemory($newPwd);
+             return false;
+         }
+ 
+         // Ensure new password is strong enough, if this option is on (note LDAP skips this)
+-        if ((!$ldapDummyPassword) && (!$this->testPasswordStrength($newPwd))) {
++        if (($validatePassword) && (!$this->testPasswordStrength($newPwd))) {
+             $this->clearFromMemory($newPwd);
+             return false;
+         }
+@@ -637,18 +638,7 @@
+             // No userInfo means a new user
+             // In these cases don't worry about password history
+             if ($create) {
+-                if (empty($new_username)) {
+-                    $this->errorMessage = xl("Password update error!");
+-                    $this->clearFromMemory($newPwd);
+-                    return false;
+-                }
+-                // Collect the new user id from the users table
+-                privStatement($insert_sql, array());
+-                $getUserID = "SELECT `id`" .
+-                    " FROM `users`" .
+-                    " WHERE BINARY `username` = ?";
+-                $user_id = privQuery($getUserID, [$new_username]);
+-                if (empty($user_id) || empty($user_id['id'])) {
++                if (empty($newUsername)) {
+                     $this->errorMessage = xl("Password update error!");
+                     $this->clearFromMemory($newPwd);
+                     return false;
+@@ -660,11 +650,13 @@
+                     error_log('OpenEMR Error : OpenEMR is not working because unable to create a hash.');
+                     die("OpenEMR Error : OpenEMR is not working because unable to create a hash.");
+                 }
+-                // Store the new user credentials
+-                $passwordSQL = "INSERT INTO `users_secure`" .
+-                    " (`id`,`username`,`password`,`last_update_password`)" .
+-                    " VALUES (?,?,?,NOW()) ";
+-                privStatement($passwordSQL, [$user_id['id'], $new_username, $hash]);
++
++                $userId = UserService::createUserWithUserFormValuesAndHash($userFormValues, $hash);
++                if (empty($userId)) {
++                    $this->errorMessage = xl("Password update error!");
++                    $this->clearFromMemory($newPwd);
++                    return false;
++                }
+             } else {
+                 $this->errorMessage = xl("Missing user credentials") . ":" . $targetUser;
+                 $this->clearFromMemory($newPwd);
+@@ -1371,6 +1363,66 @@
      }
  
      /**
++     * Authenticate a user with the HTTP headers provided by Sandstorm.
++     * @param AuthSandstorm $auth_sandstorm
 +     */
-+    public static function verifySandstormAuth()
++    public static function verifySandstormAuth(AuthSandstorm $authSandstorm): void
 +    {
-+        $headers = getallheaders();
++        $event = 'login';
++        $logPrefix = 'verifySandstormAuth';
++        // There is no meaningful way to use Open-EMR as an anonymous user.
++        // Stop processing if the user is anonymous.
++        $authSandstorm->dieIfAnonymous();
 +
-+        $displayNameEncoded = $headers['X-Sandstorm-Username'];
-+        if (!empty($displayNameEncoded)) {
-+            $displayName = urldecode($displayNameEncoded);
-+        } else {
-+            $displayName = '';
-+        }
-+        $permissionsString = $headers['X-Sandstorm-Permissions'];
-+        if (!empty($permissionsString)) {
-+            $permissions = explode(',', $permissionsString);
-+        } else {
-+            $permissions = [];
-+        }
-+        $pictureUrl = $headers['X-Sandstorm-User-Picture'];
-+        $preferredHandle = $headers['X-Sandstorm-Preferred-Handle'];
-+        $pronouns = $headers['X-Sandstorm-User-Pronouns'];
-+        $sessionType = $headers['X-Sandstorm-Session-Type'];
-+        $sessionId = $headers['X-Sandstorm-Session-Id'];
-+        $tabId = $headers['X-Sandstorm-Tab-Id'];
-+        $userId = $headers['X-Sandstorm-User-Id'];
++        $oemrUserId = sqlQuery(
++            "SELECT `user_id` " .\
++            "FROM `sandstorm_users` " .\
++            "WHERE `sandstorm_user_id` = ?",
++            [$authSandstorm->getUserId()]
++        );
++        if ($oemrUserId === FALSE) {
++            // If Sandstorm user does not have an Open-EMR user, create one.
++            // Step 1. Add the user to the `users` table.
++            sqlBeginTrans();
 +
-+        return true;
++            // Step 2. Add the user to the `users_secure` table.
++            // Step 3. Add the user ACL objects.
++            // Step 4. Add the user to a group.
++
++            sqlInsert(
++                "INSERT INTO `users` " .\
++                "  () " .\
++                "VALUES " .\
++                "  ()",
++                []
++            );
++
++            // Step 5. Associate our new Open-EMR user with the current Sandstorm user.
++            sqlInsert(
++                "INSERT INTO `sandstorm_users` (sandstorm_user_id, user_id) " .\
++                "VALUES (?, ?)",
++                [$authSandstorm->getUserId(), $oemrUserId]
++            );
++            sqlCommitTrans();
++        }
++
++        $oemr_user_info = privQuery(
++            "SELECT `id`, `username`, `authorized`, `see_auth`, `active` " .\
++            "FROM `users` " .\
++            "WHERE `id` = ?",
++            [$oemrUserId]
++        );
++        if ($oemr_user_info == FALSE) {
++            $message = $log_prefix. ": " . " Sandstorm user \"" . $auth_sandstorm->getDisplayName() . "\" (" . $auth_sandstorm->getPreferredHandle() . ") with Sandstorm user ID \"" . $auth_sandstorm->getUserId() . "\" and Open-EMR user ID \"" . $oemrUserId . "\" was not found in the `users` table.";
++            EventAuditLogger::instance()->newEvent($event, '', '', 0, $message);
++            $auth_sandstorm->dieWithMessage($message);
++        }
++
++
++        AuthUtils::setUserSessionVariables($user['username'], 'SANDSTORM_USER_NO_PASSWORD', $user, $authGroup);
 +    }
 +
 +    /**

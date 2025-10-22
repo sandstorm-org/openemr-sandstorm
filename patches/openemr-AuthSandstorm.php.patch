@@ -1,6 +1,6 @@
---- /dev/null	2025-10-20 04:26:31.631999972 +0000
-+++ /opt/openemr-7.0.3/openemr/src/Common/Auth/AuthSandstorm.php	2025-10-20 10:55:25.457835830 +0000
-@@ -0,0 +1,184 @@
+--- /dev/null	2025-10-22 09:05:38.904000181 +0000
++++ /opt/openemr-7.0.3/openemr/src/Common/Auth/AuthSandstorm.php	2025-10-22 10:18:16.453322698 +0000
+@@ -0,0 +1,190 @@
 +<?php
 +
 +/**
@@ -64,19 +64,22 @@
 +
 +    /**
 +     * Die if the user is anonymous
-+     *
++     */
++    public function dieIfAnonymous() {
++        if (empty($this->userId)) {
++            $this->dieWithMessage('Please Log In with Sandstorm to use Open-EMR');
++        }
++    }
++
++    /**
++     * Die with a message
 +     * @param string $message
 +     */
-+    public function dieIfAnonymous($message = '') {
-+        if (empty($this->userId)) {
-            $style_block = '<div style="position: absolute;left: 25%;display: flex;justify-content: center;width: 50%;height: 100%;align-items: center;background-color: #f8f9fa;">';
-            $style_text = '<p style="padding: 20px;font-size: 1.25rem; font-family: Segoe UI,Roboto;text-align: center;">';
-            $style_end = '</p></div>';
-            if (empty($message)) {
-                $message = 'Please Log In with Sandstorm to use Open-EMR';
-            }
-            die($style_block . $style_text . $message . $style_end);
-        }
++    public function dieWithMessage($message) {
++        $style_block = '<div style="position: absolute;left: 25%;display: flex;justify-content: center;width: 50%;height: 100%;align-items: center;background-color: #f8f9fa;">';
++        $style_text = '<p style="padding: 20px;font-size: 1.25rem; font-family: Segoe UI,Roboto;text-align: center;">';
++        $style_end = '</p></div>';
++        die($style_block . $style_text . $message . $style_end);
 +    }
 +
 +    /**

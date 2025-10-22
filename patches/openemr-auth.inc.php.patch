@@ -1,6 +1,6 @@
 --- /opt/openemr-7.0.3/openemr/library/auth.inc.php.orig	2025-10-06 17:02:20.086799373 +0000
-+++ /opt/openemr-7.0.3/openemr/library/auth.inc.php	2025-10-20 10:58:58.294912963 +0000
-@@ -17,10 +17,23 @@
++++ /opt/openemr-7.0.3/openemr/library/auth.inc.php	2025-10-22 09:54:44.377588949 +0000
+@@ -17,10 +17,22 @@
   */
  
  use OpenEMR\Common\Auth\AuthUtils;
@@ -15,8 +15,7 @@
 +    $_SESSION['language_direction'] = getLanguageDir($_SESSION['language_choice']);
 +
 +    $authSandstorm = new AuthSandstorm();
-+    $authSandstorm->dieIfAnonymous();
-+    $login_success = true;
++    AuthUtils::verifySandstormAuth($authSandstorm);
 +
 +    return;
 +}

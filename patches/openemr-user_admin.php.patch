@@ -1,5 +1,5 @@
---- interface/usergroup/user_admin.php.orig	2025-10-16 05:51:22.099091513 +0000
-+++ interface/usergroup/user_admin.php	2025-10-16 10:16:25.134159501 +0000
+--- /opt/openemr-7.0.3/openemr/interface/usergroup/user_admin.php.orig	2025-10-16 05:51:22.099091513 +0000
++++ /opt/openemr-7.0.3/openemr/interface/usergroup/user_admin.php	2025-10-16 10:16:25.134159501 +0000
 @@ -31,6 +31,9 @@
  use OpenEMR\Services\UserService;
  use OpenEMR\Events\User\UserEditRenderEvent;
