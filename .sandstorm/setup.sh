@@ -58,6 +58,14 @@ ln -s ${OPENEMR_VAR_DIR}/openemr/sites/default/sqlconf.php ${OPENEMR_OPT_DIR}/op
 # Put the site documents in /var
 mv ${OPENEMR_OPT_DIR}/openemr/sites/default/documents ${OPENEMR_OPT_DIR}/documents
 ln -s ${OPENEMR_VAR_DIR}/openemr/sites/default/documents ${OPENEMR_OPT_DIR}/openemr/sites/default/documents
+# Patch Open-EMR
+${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/library/auth.inc.php ${PATCHES_DIR}/openemr-auth.inc.php.patch
+${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/src/Common/Auth/AuthSandstorm.php ${PATCHES_DIR}/openemr-AuthSandstorm.php.patch
+${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/src/Common/Auth/AuthUtils.php ${PATCHES_DIR}/openemr-AuthUtils.php.patch
+${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/interface/login/login.php ${PATCHES_DIR}/openemr-login.php.patch
+${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/interface/usergroup/user_admin.php ${PATCHES_DIR}/openemr-user_admin.php.patch
+${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/interface/usergroup/usergroup_admin.php ${PATCHES_DIR}/openemr-usergroup_admin.php.patch
+${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/src/Services/UserService.php ${PATCHES_DIR}/openemr-UserService.php.patch
 
 # Stop and disable services.  Sandstorm will run them.
 systemctl stop apache2
@@ -70,13 +78,15 @@ a2enmod rewrite
 a2dismod reqtimeout
 a2dismod status
 a2dissite 000-default
-patch ${APACHE_SITES_DIR}/openemr.conf ${PATCHES_DIR}/apache2-openemr.conf.patch
-patch ${APACHE_CONF_DIR}/global-server-name.conf ${PATCHES_DIR}/apache2-global-server-name.conf.patch
-patch ${APACHE_ETC_DIR}/ports.conf ${PATCHES_DIR}/apache2-ports.conf.patch
+${PATCH_CMD} ${APACHE_SITES_DIR}/openemr.conf ${PATCHES_DIR}/apache2-openemr.conf.patch
+${PATCH_CMD} ${APACHE_CONF_DIR}/global-server-name.conf ${PATCHES_DIR}/apache2-global-server-name.conf.patch
+${PATCH_CMD} ${APACHE_ETC_DIR}/ports.conf ${PATCHES_DIR}/apache2-ports.conf.patch
 a2enconf global-server-name
 a2ensite openemr
 
 # Update MariaDB configuration
-patch ${MARIADB_HOME_DIR}/mariadb.cnf "${PATCHES_DIR}/mariadb-mariadb.cnf.patch"
-patch ${MARIADB_CONF_D_DIR}/50-server.cnf "${PATCHES_DIR}/mariadb-50-server.cnf.patch"
+${PATCH_CMD} ${MARIADB_HOME_DIR}/mariadb.cnf "${PATCHES_DIR}/mariadb-mariadb.cnf.patch"
+${PATCH_CMD} ${MARIADB_CONF_D_DIR}/50-server.cnf "${PATCHES_DIR}/mariadb-50-server.cnf.patch"
+
+# Patch
 exit 0
