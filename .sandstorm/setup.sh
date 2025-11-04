@@ -40,7 +40,7 @@ cd "${DOWNLOADS_DIR}"
 # Download Open-EMR
 if [ ! -f "${OPENEMR_ARCHIVE}" ]; then
 	printf "%s\n" "Downloading Open-EMR ${OPENEMR_VERSION} from ${OPENEMR_URL}"
-	curl --proto '=https' --tlsv1.2 -sSf "${OPENEMR_URL}" > "${DOWNLOADS_DIR}/${OPENEMR_ARCHIVE}"
+	curl --location --proto '=https' --tlsv1.2 -sSf "${OPENEMR_URL}" > "${DOWNLOADS_DIR}/${OPENEMR_ARCHIVE}"
 fi
 
 # Verify Open-EMR download
