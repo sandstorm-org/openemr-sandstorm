@@ -1,5 +1,5 @@
---- /opt/openemr-7.0.3/openemr/src/Services/UserService.php.orig	2025-10-22 16:53:52.432467353 +0000
-+++ /opt/openemr-7.0.3/openemr/src/Services/UserService.php	2025-10-22 19:49:03.719753045 +0000
+--- /opt/openemr-7.0.3/openemr/src/Services/UserService.php.orig	2025-03-23 06:57:51.000000000 +0000
++++ /opt/openemr-7.0.3/openemr/src/Services/UserService.php	2025-11-04 20:26:19.694079169 +0000
 @@ -23,8 +23,6 @@
  
  class UserService
@@ -54,7 +54,7 @@
          $sql .= "
                  FROM  users
                  LEFT JOIN list_options as abook ON abook.option_id = users.abook_type";
-@@ -383,4 +357,151 @@
+@@ -383,4 +357,180 @@
          }
          return $row;
      }
@@ -122,7 +122,7 @@
 +        $calendar,
 +        $portalUser,
 +        $supervisorId
-+    ): array<string, int|NULL|string>
++    ): array
 +    {
 +        $values = array();
 +        $values['username'] = trim($username);
@@ -155,42 +155,71 @@
 +        $values['irnPool'] = trim($irnPool);
 +        $values['calendar'] = $calendar;
 +        $values['portalUser'] = $portalUser;
-+        $values['supervisor'] = $supervisor;
++        $values['supervisorId'] = $supervisorId;
 +
 +        return $values;
 +    }
 +
-+    public static createUserWithUserFormValuesAndHash($userFormValues, $hash): int
++    public static function createUserWithUserFormValuesAndHash(array $userFormValues, string $hash): int
 +    {
 +        $newUsername = isset($userFormValues['username']) ? $userFormValues['username'] : '';
 +
-+        $privDb = getPrivDB();
-+        $privDb->BeginTrans();
++        QueryUtils::startTransaction();
 +
 +        // Insert the user into the `users` table.
 +        $usersSql =
 +            "INSERT INTO `users` " .
 +            "  (username, password, fname, mname, lname, suffix, google_signin_email, valedictory" .
-+            ", federaltaxid, state_license_number, newcrop_user_role, physician_role, " .
++            ", federaltaxid, state_license_number, newcrop_user_role, physician_type, " .
 +            "main_menu_role, patient_menu_role, weno_prov_id, authorized, info, federaldrugid, " .
 +            "upin, npi, taxonomy, facility_id, billing_facility_id, specialty, see_auth, " .
 +            "default_warehouse, irnpool, calendar, portal_user, supervisor_id) " .
 +            "VALUES " .
-+            "  (:username, 'NoLongerUsed', :firstName, :middleName, :lastName, :suffix, " .
-+            ":googleSigninEmail, :valedictory, :federalTaxId, :stateLicenseNumber, " .
-+            ":erxRole, :physicianType, :mainMenuRole, :patientMenuRole, :erxPrId, :authorized, " .
-+            ":info, :federalDrugId, :upin, :npi, :taxonomy, :facilityId, :billingFacilityId, " .
-+            ":specialty, :seeAuth, :defaultWarehouse, :irnPool, :calendar, :portalUser, " .
-+            ":supervisorId)";
-+        $recordset = privDb->ExecuteNoLog($usersSql, $userFormValues);
++            "  (?, 'NoLongerUser', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, " .
++            "?, ?, ?, ?, ?, ?, ?, ?)";
++        $values = [
++            $userFormValues['username'],
++            $userFormValues['firstName'],
++            $userFormValues['middleName'],
++            $userFormValues['lastName'],
++            $userFormValues['suffix'],
++            $userFormValues['googleSigninEmail'],
++            $userFormValues['valedictory'],
++            $userFormValues['federalTaxId'],
++            $userFormValues['stateLicenseNumber'],
++            $userFormValues['erxRole'],
++            $userFormValues['physicianType'],
++            $userFormValues['mainMenuRole'],
++            $userFormValues['patientMenuRole'],
++            $userFormValues['erxPrId'],
++            $userFormValues['authorized'],
++            $userFormValues['info'],
++            $userFormValues['federalDrugId'],
++            $userFormValues['upin'],
++            $userFormValues['npi'],
++            $userFormValues['taxonomy'],
++            $userFormValues['facilityId'],
++            $userFormValues['billingFacilityId'],
++            $userFormValues['specialty'],
++            $userFormValues['seeAuth'],
++            $userFormValues['defaultWarehouse'],
++            $userFormValues['irnPool'],
++            $userFormValues['calendar'],
++            $userFormValues['portalUser'],
++            $userFormValues['supervisorId'],
++        ];
++        $recordset = QueryUtils::sqlStatementThrowException($usersSql, $values, true);
 +        if ($recordset === FALSE) {
-+            $message = "UserService::createUserWithUserFormValuesAndHash: privDb->ExecuteNoLog(" . var_export($insertSql) . ", " . var_export($userFormValues) . ") failed.";
++            $message = "UserService::createUserWithUserFormValuesAndHash: QueryUtils::sqlStatementThrowException(" . var_export($insertSql) . ", " . var_export($userFormValues) . ") failed.";
 +            error_log($message);
 +            die($message);
 +        }
-+        $userId = privDb->insert_Id();
++        $inserted = QueryUtils::getLastInsertId();
++        if (!empty($inserted['user_id'])) {
++            $userId = inserted['user_id'];
++        }
 +        if (empty($userId)) {
-+            $message = "UserService::createUserWithUserFormValuesAndHash: privDb->ExecuteNoLog(" . var_export($insertSql) . ", " . var_export($userFormValues) . ") return an inserted ID of \"" . ($userId === 0 ? '0' : $userId === NULL ? 'NULL' : $userId) . "\".";
++            $message = "UserService::createUserWithUserFormValuesAndHash: QueryUtils::sqlStatementThrowException(" . var_export($insertSql) . ", " . var_export($userFormValues) . ") return an inserted ID of \"" . ($userId === 0 ? '0' : ($userId === NULL ? 'NULL' : $userId)) . "\".";
 +            error_log($message);
 +            die($message);
 +        }
@@ -201,8 +230,8 @@
 +            "  (`id`, `username`, `password`, `last_update_password`)" .
 +            "VALUES " .
 +            "  (?, ?, ?, NOW())";
-+        $recordset = privDb->ExecuteNoLog($usersSecureSql, [$userId, $newUsername, $hash]);
-+        $privDb->CommitTrans();
++        $recordset = QueryUtils::sqlStatementThrowException($usersSecureSql, [$userId, $newUsername, $hash], true);
++        QueryUtils::commitTransaction();
 +        return $userId;
 +    }
  }
