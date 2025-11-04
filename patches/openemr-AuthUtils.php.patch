@@ -114,8 +114,8 @@
 +        $authSandstorm->dieIfAnonymous();
 +
 +        $oemrUserId = sqlQuery(
-+            "SELECT `user_id` " .\
-+            "FROM `sandstorm_users` " .\
++            "SELECT `user_id` " .
++            "FROM `sandstorm_users` " .
 +            "WHERE `sandstorm_user_id` = ?",
 +            [$authSandstorm->getUserId()]
 +        );
@@ -129,16 +129,16 @@
 +            // Step 4. Add the user to a group.
 +
 +            sqlInsert(
-+                "INSERT INTO `users` " .\
-+                "  () " .\
-+                "VALUES " .\
++                "INSERT INTO `users` " .
++                "  () " .
++                "VALUES " .
 +                "  ()",
 +                []
 +            );
 +
 +            // Step 5. Associate our new Open-EMR user with the current Sandstorm user.
 +            sqlInsert(
-+                "INSERT INTO `sandstorm_users` (sandstorm_user_id, user_id) " .\
++                "INSERT INTO `sandstorm_users` (sandstorm_user_id, user_id) " .
 +                "VALUES (?, ?)",
 +                [$authSandstorm->getUserId(), $oemrUserId]
 +            );
@@ -146,8 +146,8 @@
 +        }
 +
 +        $oemr_user_info = privQuery(
-+            "SELECT `id`, `username`, `authorized`, `see_auth`, `active` " .\
-+            "FROM `users` " .\
++            "SELECT `id`, `username`, `authorized`, `see_auth`, `active` " .
++            "FROM `users` " .
 +            "WHERE `id` = ?",
 +            [$oemrUserId]
 +        );
