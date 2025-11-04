@@ -56,10 +56,12 @@ tar --strip-components=1 -zxf "${DOWNLOADS_DIR}/${OPENEMR_ARCHIVE}"
 rm ${OPENEMR_OPT_DIR}/openemr/sites/default/sqlconf.php
 ln -s ${OPENEMR_VAR_DIR}/openemr/sites/default/sqlconf.php ${OPENEMR_OPT_DIR}/openemr/sites/default/sqlconf.php
 # Put the site documents in /var
+rm -rf "${OPENEMR_OPT_DIR}/documents"
 mv ${OPENEMR_OPT_DIR}/openemr/sites/default/documents ${OPENEMR_OPT_DIR}/documents
 ln -s ${OPENEMR_VAR_DIR}/openemr/sites/default/documents ${OPENEMR_OPT_DIR}/openemr/sites/default/documents
 # Patch Open-EMR
 ${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/library/auth.inc.php ${PATCHES_DIR}/openemr-auth.inc.php.patch
+rm ${OPENEMR_OPT_DIR}/openemr/src/Common/Auth/AuthSandstorm.php
 ${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/src/Common/Auth/AuthSandstorm.php ${PATCHES_DIR}/openemr-AuthSandstorm.php.patch
 ${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/src/Common/Auth/AuthUtils.php ${PATCHES_DIR}/openemr-AuthUtils.php.patch
 ${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/interface/login/login.php ${PATCHES_DIR}/openemr-login.php.patch
