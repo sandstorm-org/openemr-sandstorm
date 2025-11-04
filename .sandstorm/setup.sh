@@ -67,6 +67,7 @@ ${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/src/Common/Auth/AuthUtils.php ${PATCHES_
 ${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/interface/login/login.php ${PATCHES_DIR}/openemr-login.php.patch
 ${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/interface/usergroup/user_admin.php ${PATCHES_DIR}/openemr-user_admin.php.patch
 ${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/interface/usergroup/usergroup_admin.php ${PATCHES_DIR}/openemr-usergroup_admin.php.patch
+${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/interface/usergroup/usergroup_admin_add.php ${PATCHES_DIR}/openemr-usergroup_admin_add.php.patch
 ${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/src/Services/UserService.php ${PATCHES_DIR}/openemr-UserService.php.patch
 
 # Stop and disable services.  Sandstorm will run them.
