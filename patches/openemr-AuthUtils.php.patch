@@ -1,5 +1,5 @@
---- /opt/openemr-7.0.3/openemr/src/Common/Auth/AuthUtils.php.orig	2025-10-06 18:45:40.934070010 +0000
-+++ /opt/openemr-7.0.3/openemr/src/Common/Auth/AuthUtils.php	2025-10-22 19:06:14.899899102 +0000
+--- /opt/openemr-7.0.3/openemr/src/Common/Auth/AuthUtils.php.orig	2025-03-23 06:57:52.000000000 +0000
++++ /opt/openemr-7.0.3/openemr/src/Common/Auth/AuthUtils.php	2025-11-04 21:20:30.855083333 +0000
 @@ -44,6 +44,7 @@
  use OpenEMR\Common\Acl\AclExtended;
  use OpenEMR\Common\Acl\AclMain;
@@ -98,7 +98,7 @@
              } else {
                  $this->errorMessage = xl("Missing user credentials") . ":" . $targetUser;
                  $this->clearFromMemory($newPwd);
-@@ -1371,6 +1363,66 @@
+@@ -1371,6 +1363,117 @@
      }
  
      /**
@@ -113,55 +113,136 @@
 +        // Stop processing if the user is anonymous.
 +        $authSandstorm->dieIfAnonymous();
 +
-+        $oemrUserId = sqlQuery(
++        $queryResponse = sqlQuery(
 +            "SELECT `user_id` " .
 +            "FROM `sandstorm_users` " .
 +            "WHERE `sandstorm_user_id` = ?",
-+            [$authSandstorm->getUserId()]
++            [$authSandstorm->getUserIdAsBinary()]
 +        );
-+        if ($oemrUserId === FALSE) {
++        if ($queryResponse === FALSE) {
 +            // If Sandstorm user does not have an Open-EMR user, create one.
++            $newUsername = newUsernameWithPreferredHandle($authSandstorm->getPreferredHandle());
++            $userFormValues = UserService::buildUserFormValuesArray(
++                $newUsername,
++                $authSandstorm->getDisplayName(),
++                '', // middleName
++                '', // lastName
++                '', // suffix
++                NULL, // googleSigninEmail
++                '', // valedictory
++                '', // federalTaxId
++                '', // stateLicenseNumber
++                '', // erxRole
++                '', // physicianType
++                '', // mainMenuRole
++                '', // patientMenuRole
++                '', // erxPrId
++                '', // authorized
++                '', // info
++                '', // federalDrugId
++                '', // upin
++                '', // npi
++                '', // taxonomy
++                '', // facilityId
++                '', // billingFacilityId
++                '', // specialty
++                '', // seeAuth
++                '', // defaultWarehouse
++                '', // irnPool
++                0,  // calendar
++                0,  // portalUser
++                0,  // supervisorId
++            );
++
 +            // Step 1. Add the user to the `users` table.
-+            sqlBeginTrans();
-+
 +            // Step 2. Add the user to the `users_secure` table.
-+            // Step 3. Add the user ACL objects.
-+            // Step 4. Add the user to a group.
++            sqlBeginTrans();
++            // No password should match a hash of '!'.
++            $oemrUserId = UserService::createUserWithUserFormValuesAndHash($userFormValues, '!');
 +
++            // Step 3. Add the user ACL objects.
++            $groups = $authSandstorm->getAroGroupsWithSandstormPermissions();
++            AclExtended::addUserAros($userFormValues['username'], $groups);
++
++            // Step 4. Add the user to a group.
++            $authGroup = 'Default';
 +            sqlInsert(
-+                "INSERT INTO `users` " .
-+                "  () " .
-+                "VALUES " .
-+                "  ()",
-+                []
++                "INSERT INTO `groups` (name, user) " .
++                "VALUES (?, ?)",
++                [$authGroup, $userFormValues['username']]
 +            );
 +
 +            // Step 5. Associate our new Open-EMR user with the current Sandstorm user.
 +            sqlInsert(
 +                "INSERT INTO `sandstorm_users` (sandstorm_user_id, user_id) " .
 +                "VALUES (?, ?)",
-+                [$authSandstorm->getUserId(), $oemrUserId]
++                [$authSandstorm->getUserIdAsBinary(), $oemrUserId]
 +            );
 +            sqlCommitTrans();
++
++            // TODO: Fire an event since we created a new user.
++        } else if (!empty($queryResponse)) {
++            $oemrUserId = $queryResponse['user_id'];
 +        }
 +
-+        $oemr_user_info = privQuery(
++        $oemrUserInfo = privQuery(
 +            "SELECT `id`, `username`, `authorized`, `see_auth`, `active` " .
 +            "FROM `users` " .
 +            "WHERE `id` = ?",
 +            [$oemrUserId]
 +        );
-+        if ($oemr_user_info == FALSE) {
-+            $message = $log_prefix. ": " . " Sandstorm user \"" . $auth_sandstorm->getDisplayName() . "\" (" . $auth_sandstorm->getPreferredHandle() . ") with Sandstorm user ID \"" . $auth_sandstorm->getUserId() . "\" and Open-EMR user ID \"" . $oemrUserId . "\" was not found in the `users` table.";
++        if ($oemrUserInfo == FALSE) {
++            $message = $logPrefix. ": " . " Sandstorm user \"" . $authSandstorm->getDisplayName() . "\" (" . $authSandstorm->getPreferredHandle() . ") with Sandstorm user ID \"" . $authSandstorm->getUserIdAsString() . "\" and Open-EMR user ID \"" . $oemrUserId . "\" was not found in the `users` table.";
 +            EventAuditLogger::instance()->newEvent($event, '', '', 0, $message);
-+            $auth_sandstorm->dieWithMessage($message);
++            $authSandstorm->dieWithMessage($message);
++        }
++        if (empty($authGroup)) {
++            $groupResult = sqlQuery(
++                "SELECT `name` " .
++                "FROM `groups` " .
++                "WHERE `user` = ?",
++                [$oemrUserInfo['username']]
++            );
++            var_dump($groupResult);
++            if ($groupResult !== FALSE) {
++                $authGroup = $groupResult['name'];
++            }
 +        }
 +
-+
-+        AuthUtils::setUserSessionVariables($user['username'], 'SANDSTORM_USER_NO_PASSWORD', $user, $authGroup);
++        AuthUtils::setUserSessionVariables($oemrUserInfo['username'], 'SANDSTORM_USER_NO_PASSWORD', $oemrUserInfo, $authGroup);
 +    }
 +
 +    /**
       * Given an associative array representing the user, set the session variables
       * @param $username
       * @param $hash
+@@ -1391,3 +1494,29 @@
+         }
+     }
+ }
++
++function newUsernameWithPreferredHandle(string $handle): string {
++
++    $alreadyExists = true;
++    $number = 1;
++    $testedHandle = $handle;
++    $tooManyTries = 100;
++
++    while ($alreadyExists) {
++        $exists = sqlQuery(
++            "SELECT 1 " .
++            "FROM `users` " .
++            "WHERE `username` = ?",
++            [$testedHandle]
++        );
++        if ($exists === FALSE) {
++            break;
++        }
++        $testedHandle = $handle . "-" . $number;
++        $number += 1;
++        if ($number >= $tooManyTries) {
++            die("Giving up after trying to find an unused username " . $number . " times (handle=" . $handle . ")");
++        }
++    }
++    return $testedHandle;
++}
