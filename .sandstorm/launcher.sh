@@ -121,6 +121,8 @@ if [ "${HAS_DATABASE}" = "NO" ]; then
 	[ $? = 0 ] && echo "Database created."
 	/usr/bin/mysql "--user=${OPENEMR_DATABASE_USER}" "${OPENEMR_DATABASE}" < "${SQL_DIR}/initial_data.sql"
 	[ $? = 0 ] && echo "Initial data loaded."
+	/usr/bin/mysql "--user=${OPENEMR_DATABASE_USER}" "${OPENEMR_DATABASE}" < "${SQL_DIR}/sandstorm.sql"
+	[ $? = 0 ] && echo "Sandstorm tables created."
 fi
 
 # Apache 2 HTTP server wants our user to have a username.
