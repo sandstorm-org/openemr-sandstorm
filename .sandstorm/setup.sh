@@ -65,10 +65,14 @@ rm ${OPENEMR_OPT_DIR}/openemr/src/Common/Auth/AuthSandstorm.php
 ${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/src/Common/Auth/AuthSandstorm.php ${PATCHES_DIR}/openemr-AuthSandstorm.php.patch
 ${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/src/Common/Auth/AuthUtils.php ${PATCHES_DIR}/openemr-AuthUtils.php.patch
 ${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/interface/login/login.php ${PATCHES_DIR}/openemr-login.php.patch
+${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/interface/main/main_screen.php ${PATCHES_DIR}/openemr-main_screen.php.patch
 ${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/interface/usergroup/user_admin.php ${PATCHES_DIR}/openemr-user_admin.php.patch
 ${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/interface/usergroup/usergroup_admin.php ${PATCHES_DIR}/openemr-usergroup_admin.php.patch
 ${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/interface/usergroup/usergroup_admin_add.php ${PATCHES_DIR}/openemr-usergroup_admin_add.php.patch
 ${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/src/Services/UserService.php ${PATCHES_DIR}/openemr-UserService.php.patch
+${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/templates/login/login_core.html.twig ${PATCHES_DIR}/openemr-login_core.html.twig.patch
+${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/templates/login/layouts/vertical_box.html.twig ${PATCHES_DIR}/openemr-vertical_box.html.twig.patch
+${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/templates/login/partials/html/login_details.html.twig ${PATCHES_DIR}/openemr-login_details.html.twig.patch
 
 # Stop and disable services.  Sandstorm will run them.
 systemctl stop apache2

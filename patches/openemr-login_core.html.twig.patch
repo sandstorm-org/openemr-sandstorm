@@ -1,0 +1,11 @@
+--- /opt/openemr-7.0.3/openemr/templates/login/login_core.html.twig.orig	2025-11-05 18:07:31.973202789 +0000
++++ /opt/openemr-7.0.3/openemr/templates/login/login_core.html.twig	2025-11-05 18:08:33.473202867 +0000
+@@ -51,7 +51,7 @@
+     </script>
+ </head>
+ <body class="login">
+-    <form method="POST" id="login_form" autocomplete="off" action="../main/main_screen.php?auth=login&site={{ siteID|attr_url }}" target="_top" name="login_form">
++    <form method="POST" id="login_form" autocomplete="off" action="../main/main_screen.php?auth=login&site={{ siteID|attr_url }}" name="login_form">
+         <div class="{{ loginRow|attr }}">
+             <div class="{{ formArea|attr }}">
+                 <input type="hidden" name="new_login_session_management" value="1">

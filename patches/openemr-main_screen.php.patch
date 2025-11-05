@@ -1,0 +1,20 @@
+--- /opt/openemr-7.0.3/openemr/interface/main/main_screen.php.orig	2025-11-05 18:05:16.711202615 +0000
++++ /opt/openemr-7.0.3/openemr/interface/main/main_screen.php	2025-11-05 18:06:03.945202676 +0000
+@@ -285,7 +285,7 @@
+ 
+                 echo '<div class="row">';
+                 echo '  <div class="col-sm-12">';
+-                echo '      <form method="post" action="main_screen.php?auth=login&site=' . attr_url($_GET['site']) . '" target="_top" name="challenge_form" id=="challenge_form">';
++                echo '      <form method="post" action="main_screen.php?auth=login&site=' . attr_url($_GET['site']) . '" name="challenge_form" id=="challenge_form">';
+                 echo '              <fieldset>';
+                 echo '                  <legend>' . xlt('Provide TOTP code') . '</legend>';
+                 echo '                  <div class="form-group">';
+@@ -326,7 +326,7 @@
+                 }
+                 echo '<div class="row">';
+                 echo '  <div class="col-sm-12">';
+-                echo '          <form method="post" name="u2fform" id="u2fform" action="main_screen.php?auth=login&site=' . attr_url($_GET['site']) . '" target="_top">';
++                echo '          <form method="post" name="u2fform" id="u2fform" action="main_screen.php?auth=login&site=' . attr_url($_GET['site']) . '">';
+                 echo '              <fieldset>';
+                 echo '                  <legend>' . xlt('Insert U2F Key') . '</legend>';
+                 echo '                  <div class="form-group">';

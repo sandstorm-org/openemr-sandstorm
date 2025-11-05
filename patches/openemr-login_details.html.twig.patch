@@ -1,0 +1,11 @@
+--- /opt/openemr-7.0.3/openemr/templates/login/partials/html/login_details.html.twig.orig	2025-11-05 18:07:57.250202821 +0000
++++ /opt/openemr-7.0.3/openemr/templates/login/partials/html/login_details.html.twig	2025-11-05 18:08:38.381202874 +0000
+@@ -24,7 +24,7 @@
+ 
+ {% include "login/partials/html/login_failure.html.twig" %}
+ 
+-<form method="POST" id="login_form" autocomplete="off" action="../main/main_screen.php?auth=login&site={{ siteID|attr_url }}" target="_top" name="login_form">
++<form method="POST" id="login_form" autocomplete="off" action="../main/main_screen.php?auth=login&site={{ siteID|attr_url }}" name="login_form">
+     <input type="hidden" name="new_login_session_management" value="1">
+     <input type="hidden" name="languageChoice" value="{{ defaultLangID|attr }}">
+     {% include "login/partials/input/username.html.twig" %}
