@@ -157,7 +157,8 @@ const pkgdef :Spk.PackageDefinition = (
   # You should review it later, before shipping your app.
 
   alwaysInclude = [
-    "opt/openemr-7.0.3"
+    "opt/openemr-7.0.3",
+    "usr/share/mariadb/english"
   ],
   # Fill this list with more names of files or directories that should be
   # included in your package, even if not listed in sandstorm-files.list.
