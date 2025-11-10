@@ -85,6 +85,7 @@ a2enmod rewrite
 a2dismod reqtimeout
 a2dismod status
 a2dissite 000-default
+rm ${APACHE_SITES_DIR}/openemr.conf
 ${PATCH_CMD} ${APACHE_SITES_DIR}/openemr.conf ${PATCHES_DIR}/apache2-openemr.conf.patch
 ${PATCH_CMD} ${APACHE_CONF_DIR}/global-server-name.conf ${PATCHES_DIR}/apache2-global-server-name.conf.patch
 ${PATCH_CMD} ${APACHE_ETC_DIR}/ports.conf ${PATCHES_DIR}/apache2-ports.conf.patch
