@@ -2,6 +2,18 @@
 APP_DIR=/opt/app
 DOWNLOADS_DIR=${APP_DIR}/downloads
 PATCHES_DIR=${APP_DIR}/patches
+SQL_DIR=${APP_DIR}/sql
+
+# Apache HTTP Server
+APACHE_ETC_DIR=/etc/apache2
+APACHE_CONF_DIR=${APACHE_ETC_DIR}/conf-available
+APACHE_SITES_DIR=${APACHE_ETC_DIR}/sites-available
+
+# MariaDB
+MARIADB_HOME_DIR=/etc/mysql
+MARIADB_CONF_D_DIR=${MARIADB_HOME_DIR}/mariadb.conf.d
+MARIADB_DATA_DIR=/var/lib/mysql
+#MARIADB_DATAFILES_DIR=/var/lib/mysql-files
 
 # Open-EMR
 OPENEMR_VERSION=7.0.3
@@ -9,3 +21,8 @@ OPENEMR_ARCHIVE=openemr-${OPENEMR_VERSION}.tar.gz
 OPENEMR_ARCHIVE_DIR=openemr-${OPENEMR_VERSION}
 OPENEMR_OPT_DIR=/opt/${OPENEMR_ARCHIVE_DIR}
 OPENEMR_URL=https://downloads.sourceforge.net/project/openemr/OpenEMR%20Current/${OPENEMR_VERSION}/${OPENEMR_ARCHIVE}?viasf=1
+OPENEMR_DATABASE=openemr
+OPENEMR_DATABASE_USER=openemr
+USER=openemr
+OPENEMR_USER=openemr
+OPENEMR_VAR_DIR=/var/${OPENEMR_ARCHIVE_DIR}

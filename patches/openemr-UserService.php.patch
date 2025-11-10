@@ -1,0 +1,208 @@
+--- /opt/openemr-7.0.3/openemr/src/Services/UserService.php.orig	2025-10-22 16:53:52.432467353 +0000
++++ /opt/openemr-7.0.3/openemr/src/Services/UserService.php	2025-10-22 19:49:03.719753045 +0000
+@@ -23,8 +23,6 @@
+ 
+ class UserService
+ {
+-    private $_includeUsername;
+-
+     /**
+      * The name of the system user used for api requests.
+      */
+@@ -35,24 +33,6 @@
+      */
+     public function __construct()
+     {
+-        $this->_includeUsername = false;
+-    }
+-
+-    /**
+-     * Sensitive fields in the database that are excluded by default from the service can be included here.
+-     * Things such as username are normally excluded.
+-     * @param $fields
+-     * @return void
+-     */
+-    public function toggleSensitiveFields($fields)
+-    {
+-        foreach ($fields as $field) {
+-            switch ($field) {
+-                case 'username':
+-                    $this->_includeUsername = !$this->_includeUsername;
+-                    break;
+-            }
+-        }
+     }
+ 
+     public function getUuidFields()
+@@ -256,9 +236,6 @@
+                         state_license_number,
+                         abook.title as abook_title,
+                         last_updated ";
+-        if ($this->_includeUsername) {
+-            $sql .= ", username";
+-        }
+         // grab our address book type, make sure to use the index w/ list_id and option_id
+         $sql .= "
+                 FROM  users
+@@ -324,9 +301,6 @@
+                         users.notes,
+                         state_license_number,
+                         abook.title as abook_title";
+-        if ($this->_includeUsername) {
+-            $sql .= ", username";
+-        }
+         $sql .= "
+                 FROM  users
+                 LEFT JOIN list_options as abook ON abook.option_id = users.abook_type";
+@@ -383,4 +357,151 @@
+         }
+         return $row;
+     }
++
++    /**
++     * Put the user form values into an associative array
++     * @param string $username
++     * @param string $firstName
++     * @param string $middleName
++     * @param string $lastName
++     * @param string $suffix
++     * @param NULL|string $googleSigninEmail
++     * @param string $valedictory
++     * @param string $federalTaxId
++     * @param string $stateLicenseNumber
++     * @param string $erxRole
++     * @param string $physicianType
++     * @param string $mainMenuRole
++     * @param string $patientMenuRole
++     * @param string $erxPrId
++     * @param string $authorized
++     * @param string $info
++     * @param string $federalDrugId
++     * @param string $upin
++     * @param string $npi
++     * @param string $taxonomy
++     * @param string $facilityId
++     * @param string $billingFacilityId
++     * @param string $specialty
++     * @param string $seeAuth
++     * @param string $defaultWarehouse
++     * @param string $irnPool
++     * @param int $calendar
++     * @param int $portalUser
++     * @param int $supervisorId
++     * @return array<string, int|NULL|string>
++     */
++    public static function buildUserFormValuesArray(
++        $username,
++        $firstName,
++        $middleName,
++        $lastName,
++        $suffix,
++        $googleSigninEmail,
++        $valedictory,
++        $federalTaxId,
++        $stateLicenseNumber,
++        $erxRole,
++        $physicianType,
++        $mainMenuRole,
++        $patientMenuRole,
++        $erxPrId,
++        $authorized,
++        $info,
++        $federalDrugId,
++        $upin,
++        $npi,
++        $taxonomy,
++        $facilityId,
++        $billingFacilityId,
++        $specialty,
++        $seeAuth,
++        $defaultWarehouse,
++        $irnPool,
++        $calendar,
++        $portalUser,
++        $supervisorId
++    ): array<string, int|NULL|string>
++    {
++        $values = array();
++        $values['username'] = trim($username);
++        $values['firstName'] = trim($firstName);
++        $values['middleName'] = trim($middleName);
++        $values['lastName'] = trim($lastName);
++        $values['suffix'] = trim($suffix);
++        // googleSigninEmail has a unique key constraint so it needs to be NULL
++        // instead of an empty string.
++        $values['googleSigninEmail'] = isset($googleSigninEmail) ? trim($googleSigninEmail) : NULL;
++        $values['valedictory'] = trim($valedictory);
++        $values['federalTaxId'] = trim($federalTaxId);
++        $values['stateLicenseNumber'] = trim($stateLicenseNumber);
++        $values['erxRole'] = trim($erxRole);
++        $values['physicianType'] = trim($physicianType);
++        $values['mainMenuRole'] = trim($mainMenuRole);
++        $values['patientMenuRole'] = trim($patientMenuRole);
++        $values['erxPrId'] = trim($erxPrId);
++        $values['authorized'] = trim($authorized);
++        $values['info'] = trim($info);
++        $values['federalDrugId'] = trim($federalDrugId);
++        $values['upin'] = trim($upin);
++        $values['npi'] = trim($npi);
++        $values['taxonomy'] = trim($taxonomy);
++        $values['facilityId'] = trim($facilityId);
++        $values['billingFacilityId'] = trim($billingFacilityId);
++        $values['specialty'] = trim($specialty);
++        $values['seeAuth'] = trim($seeAuth);
++        $values['defaultWarehouse'] = trim($defaultWarehouse);
++        $values['irnPool'] = trim($irnPool);
++        $values['calendar'] = $calendar;
++        $values['portalUser'] = $portalUser;
++        $values['supervisor'] = $supervisor;
++
++        return $values;
++    }
++
++    public static createUserWithUserFormValuesAndHash($userFormValues, $hash): int
++    {
++        $newUsername = isset($userFormValues['username']) ? $userFormValues['username'] : '';
++
++        $privDb = getPrivDB();
++        $privDb->BeginTrans();
++
++        // Insert the user into the `users` table.
++        $usersSql =
++            "INSERT INTO `users` " .
++            "  (username, password, fname, mname, lname, suffix, google_signin_email, valedictory" .
++            ", federaltaxid, state_license_number, newcrop_user_role, physician_role, " .
++            "main_menu_role, patient_menu_role, weno_prov_id, authorized, info, federaldrugid, " .
++            "upin, npi, taxonomy, facility_id, billing_facility_id, specialty, see_auth, " .
++            "default_warehouse, irnpool, calendar, portal_user, supervisor_id) " .
++            "VALUES " .
++            "  (:username, 'NoLongerUsed', :firstName, :middleName, :lastName, :suffix, " .
++            ":googleSigninEmail, :valedictory, :federalTaxId, :stateLicenseNumber, " .
++            ":erxRole, :physicianType, :mainMenuRole, :patientMenuRole, :erxPrId, :authorized, " .
++            ":info, :federalDrugId, :upin, :npi, :taxonomy, :facilityId, :billingFacilityId, " .
++            ":specialty, :seeAuth, :defaultWarehouse, :irnPool, :calendar, :portalUser, " .
++            ":supervisorId)";
++        $recordset = privDb->ExecuteNoLog($usersSql, $userFormValues);
++        if ($recordset === FALSE) {
++            $message = "UserService::createUserWithUserFormValuesAndHash: privDb->ExecuteNoLog(" . var_export($insertSql) . ", " . var_export($userFormValues) . ") failed.";
++            error_log($message);
++            die($message);
++        }
++        $userId = privDb->insert_Id();
++        if (empty($userId)) {
++            $message = "UserService::createUserWithUserFormValuesAndHash: privDb->ExecuteNoLog(" . var_export($insertSql) . ", " . var_export($userFormValues) . ") return an inserted ID of \"" . ($userId === 0 ? '0' : $userId === NULL ? 'NULL' : $userId) . "\".";
++            error_log($message);
++            die($message);
++        }
++
++        // Insert the user into the `users_secure` table.
++        $usersSecureSql =
++            "INSERT INTO `users_secure`" .
++            "  (`id`, `username`, `password`, `last_update_password`)" .
++            "VALUES " .
++            "  (?, ?, ?, NOW())";
++        $recordset = privDb->ExecuteNoLog($usersSecureSql, [$userId, $newUsername, $hash]);
++        $privDb->CommitTrans();
++        return $userId;
++    }
+ }

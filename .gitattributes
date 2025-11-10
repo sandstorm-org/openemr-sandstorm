@@ -2,5 +2,8 @@
 .sandstorm/environment text eol=lf
 .sandstorm/*.sh text eol=lf
 
+# Please do not mess with my SHA-256 hash files.
+downloads/*.sha256 text eol=lf
+
 # Please do not mess with the patch files.
 patches/** test eol=lf

@@ -1,0 +1,36 @@
+--- /opt/openemr-7.0.3/openemr/interface/usergroup/user_admin.php.orig	2025-10-16 05:51:22.099091513 +0000
++++ /opt/openemr-7.0.3/openemr/interface/usergroup/user_admin.php	2025-10-16 10:16:25.134159501 +0000
+@@ -31,6 +31,9 @@
+ use OpenEMR\Services\UserService;
+ use OpenEMR\Events\User\UserEditRenderEvent;
+ 
++$is_sandstorm = getenv('SANDSTORM') == '1';
++$hide_password = empty($GLOBALS['gbl_ldap_enabled']) || empty($GLOBALS['gbl_ldap_exclusions']) || !$is_sandstorm
++
+ if (!empty($_GET)) {
+     if (!CsrfUtils::verifyCsrfToken($_GET["csrf_token_form"])) {
+         CsrfUtils::csrfNotVerified();
+@@ -97,7 +100,7 @@
+ 
+     top.restoreSession();
+     var flag=0;
+-<?php if (empty($GLOBALS['gbl_ldap_enabled']) || empty($GLOBALS['gbl_ldap_exclusions'])) { ?>
++<?php if ($hide_password) { ?>
+     if(document.forms[0].clearPass.value!="")
+     {
+         //Checking for the strong password if the 'secure password' feature is enabled
+@@ -301,12 +304,12 @@
+ <TR>
+     <TD style="width:180px;"><span class=text><?php echo xlt('Username'); ?>: </span></TD>
+     <TD style="width:270px;"><input type="text" name=username style="width:150px;" class="form-control" value="<?php echo attr($iter["username"]); ?>" disabled></td>
+-<?php if (empty($GLOBALS['gbl_ldap_enabled']) || empty($GLOBALS['gbl_ldap_exclusions'])) { ?>
++<?php if ($hide_password) { ?>
+         <TD style="width:200px;"><span class=text>*<?php echo xlt('Your Password'); ?>*: </span></TD>
+         <TD class='text' style="width:280px;"><input type='password' name=adminPass style="width:150px;"  class="form-control" value="" autocomplete='off'><font class="mandatory"></font></TD>
+ <?php } ?>
+ </TR>
+-<?php if (empty($GLOBALS['gbl_ldap_enabled']) || empty($GLOBALS['gbl_ldap_exclusions'])) { ?>
++<?php if ($hide_password) { ?>
+ <TR>
+     <TD style="width:180px;"><span class=text></span></TD>
+     <TD style="width:270px;"></td>

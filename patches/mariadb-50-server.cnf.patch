@@ -1,7 +1,11 @@
 --- 50-server.cnf.orig	2025-09-24 11:10:12.692079677 +0000
-+++ 50-server.cnf	2025-09-24 11:19:16.175193826 +0000
-@@ -16,7 +16,10 @@
- pid-file                = /run/mysqld/mysqld.pid
++++ 50-server.cnf	2025-10-01 08:53:25.490349874 +0000
+@@ -13,18 +13,22 @@
+ #
+ 
+ #user                    = mysql
+-pid-file                = /run/mysqld/mysqld.pid
++pid-file                = /var/run/mysqld/mysqld.pid
  basedir                 = /usr
  #datadir                 = /var/lib/mysql
 -#tmpdir                  = /tmp
@@ -12,12 +16,23 @@
  
  # Broken reverse DNS slows down connections considerably and name resolve is
  # safe to skip if there are no "host by domain name" access grants
-@@ -105,6 +108,12 @@
+-#skip-name-resolve
++skip-name-resolve
+ 
+ # Instead of skip-networking the default is now to listen only on
+ # localhost which is more compatible and is not less secure.
+-bind-address            = 127.0.0.1
++#bind-address            = 127.0.0.1
++skip-networking
+ 
+ #
+ # * Fine Tuning
+@@ -105,6 +109,12 @@
  # https://mariadb.com/kb/en/innodb-system-variables/#innodb_buffer_pool_size
  #innodb_buffer_pool_size = 8G
  
 +# Set the transaction log file to the minimum allowed size to save disk space.
-+innodb_log_file_size = 1048576
++innodb_log_file_size = 4194304
 +
 +# Set the main data file to grow by 1MB at a time, rather than 8MB at a time.
 +innodb_autoextend_increment = 1

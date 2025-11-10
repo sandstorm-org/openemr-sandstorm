@@ -28,7 +28,7 @@ script_dir="$(cd "$(dirname "$0")" && pwd)"
 
 # Install Open-EMR dependencies
 export DEBIAN_FRONTEND=noninteractive
-apt-get install --yes apache2 libapache2-mod-php libtiff-tools php php-mysql php-cli php-gd php-xml php-curl php-soap php-json imagemagick php-mbstring php-zip php-ldap php-intl mariadb-server
+apt-get install --yes apache2 build-essential imagemagick libapache2-mod-php libnss-wrapper libtiff-tools mariadb-server php php-mysql php-cli php-gd php-xml php-curl php-soap php-json php-mbstring php-zip php-ldap php-intl
 
 # Install development tools
 apt-get install --yes patch
@@ -40,7 +40,7 @@ cd "${DOWNLOADS_DIR}"
 # Download Open-EMR
 if [ ! -f "${OPENEMR_ARCHIVE}" ]; then
 	printf "%s\n" "Downloading Open-EMR ${OPENEMR_VERSION} from ${OPENEMR_URL}"
-	curl -vL "${OPENEMR_URL}" > "${DOWNLOADS_DIR}/${OPENEMR_ARCHIVE}"
+	curl --proto '=https' --tlsv1.2 -sSf "${OPENEMR_URL}" > "${DOWNLOADS_DIR}/${OPENEMR_ARCHIVE}"
 fi
 
 # Verify Open-EMR download
@@ -49,9 +49,15 @@ sha256sum --check --ignore-missing "${OPENEMR_ARCHIVE}.sha256"
 
 # Extract Open-EMR
 printf "Extracting Open-EMR\n"
-mkdir "${OPENEMR_OPT_DIR}"
-cd "${OPENEMR_OPT_DIR}"
-tar zxf "${DOWNLOADS_DIR}/${OPENEMR_ARCHIVE}"
+mkdir --parents "${OPENEMR_OPT_DIR}/openemr"
+cd "${OPENEMR_OPT_DIR}/openemr"
+tar --strip-components=1 -zxf "${DOWNLOADS_DIR}/${OPENEMR_ARCHIVE}"
+# Remove this writable file and link it to /var
+rm ${OPENEMR_OPT_DIR}/openemr/sites/default/sqlconf.php
+ln -s ${OPENEMR_VAR_DIR}/openemr/sites/default/sqlconf.php ${OPENEMR_OPT_DIR}/openemr/sites/default/sqlconf.php
+# Put the site documents in /var
+mv ${OPENEMR_OPT_DIR}/openemr/sites/default/documents ${OPENEMR_OPT_DIR}/documents
+ln -s ${OPENEMR_VAR_DIR}/openemr/sites/default/documents ${OPENEMR_OPT_DIR}/openemr/sites/default/documents
 
 # Stop and disable services.  Sandstorm will run them.
 systemctl stop apache2
@@ -59,6 +65,18 @@ systemctl stop mariadb
 systemctl disable apache2
 systemctl disable mariadb
 
+# Update Apache HTTP Server configuration
+a2enmod rewrite
+a2dismod reqtimeout
+a2dismod status
+a2dissite 000-default
+patch ${APACHE_SITES_DIR}/openemr.conf ${PATCHES_DIR}/apache2-openemr.conf.patch
+patch ${APACHE_CONF_DIR}/global-server-name.conf ${PATCHES_DIR}/apache2-global-server-name.conf.patch
+patch ${APACHE_ETC_DIR}/ports.conf ${PATCHES_DIR}/apache2-ports.conf.patch
+a2enconf global-server-name
+a2ensite openemr
+
 # Update MariaDB configuration
-patch /etc/mysql/mariadb.conf.d/50-server.cnf "${PATCHES_DIR}/mariadb-50-server.cnf.patch"
+patch ${MARIADB_HOME_DIR}/mariadb.cnf "${PATCHES_DIR}/mariadb-mariadb.cnf.patch"
+patch ${MARIADB_CONF_D_DIR}/50-server.cnf "${PATCHES_DIR}/mariadb-50-server.cnf.patch"
 exit 0
