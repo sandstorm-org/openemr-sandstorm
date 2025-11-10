@@ -1,5 +1,5 @@
 --- /opt/openemr-7.0.3/openemr/src/Common/Auth/AuthUtils.php.orig	2025-03-23 06:57:52.000000000 +0000
-+++ /opt/openemr-7.0.3/openemr/src/Common/Auth/AuthUtils.php	2025-11-04 21:20:30.855083333 +0000
++++ /opt/openemr-7.0.3/openemr/src/Common/Auth/AuthUtils.php	2025-11-10 05:39:45.703649590 +0000
 @@ -44,6 +44,7 @@
  use OpenEMR\Common\Acl\AclExtended;
  use OpenEMR\Common\Acl\AclMain;
@@ -98,7 +98,7 @@
              } else {
                  $this->errorMessage = xl("Missing user credentials") . ":" . $targetUser;
                  $this->clearFromMemory($newPwd);
-@@ -1371,6 +1363,117 @@
+@@ -1371,6 +1363,116 @@
      }
  
      /**
@@ -203,7 +203,6 @@
 +                "WHERE `user` = ?",
 +                [$oemrUserInfo['username']]
 +            );
-+            var_dump($groupResult);
 +            if ($groupResult !== FALSE) {
 +                $authGroup = $groupResult['name'];
 +            }
@@ -216,7 +215,7 @@
       * Given an associative array representing the user, set the session variables
       * @param $username
       * @param $hash
-@@ -1391,3 +1494,29 @@
+@@ -1391,3 +1493,29 @@
          }
      }
  }
