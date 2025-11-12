@@ -1,5 +1,5 @@
---- /dev/null	2025-11-04 16:15:33.161114835 +0000
-+++ /opt/openemr-7.0.3/openemr/src/Common/Auth/AuthSandstorm.php	2025-11-04 21:25:36.609083725 +0000
+--- /dev/null	2025-11-10 05:13:38.390906557 +0000
++++ /opt/openemr-7.0.3/openemr/src/Common/Auth/AuthSandstorm.php	2025-11-10 11:29:05.325963868 +0000
 @@ -0,0 +1,232 @@
 +<?php
 +
@@ -111,13 +111,13 @@
 +    public function getAroGroupsWithSandstormPermissions() {
 +        $result = array();
 +        foreach ($this->permissions as $permission) {
-+            if ($permission = 'role:administrator') {
++            if ($permission === 'role:administrator') {
 +                array_push($result, 'Administrators');
-+            } else if ($permission = 'role:manager') {
-+            } else if ($permission = 'role:back office') {
-+            } else if ($permission = 'role:front office') {
++            } else if ($permission === 'role:manager') {
++            } else if ($permission === 'role:back office') {
++            } else if ($permission === 'role:front office') {
 +                array_push($result, 'Front Office');
-+            } else if ($permission = 'role:clinician') {
++            } else if ($permission === 'role:clinician') {
 +                array_push($result, 'Clinicians');
 +            }
 +        }
