@@ -1,0 +1,21 @@
+--- /opt/openemr-7.0.3/openemr/interface/main/tabs/main.php.orig	2025-11-05 04:43:10.517871676 +0000
++++ /opt/openemr-7.0.3/openemr/interface/main/tabs/main.php	2025-11-05 04:45:50.115871881 +0000
+@@ -31,6 +31,7 @@
+ use OpenEMR\Services\LogoService;
+ use Symfony\Component\Filesystem\Path;
+ 
++$isSandstorm = !!getenv('SANDSTORM');
+ $logoService = new LogoService();
+ $menuLogo = $logoService->getLogo('core/menu/primary/');
+ 
+@@ -346,7 +347,9 @@
+     <?php
+     echo $twig->render("interface/main/tabs/therapy_group_template.html.twig", []);
+     echo $twig->render("interface/main/tabs/user_data_template.html.twig", [
+-        'openemr_name' => $GLOBALS['openemr_name']
++        'openemr_name' => $GLOBALS['openemr_name'],
++	'show_mfa' => !$isSandstorm,
++	'show_password' => !$isSandstorm
+     ]);
+     // Collect the menu then build it
+     $menuMain = new MainMenuRole($GLOBALS['kernel']->getEventDispatcher());

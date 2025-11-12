@@ -1,6 +1,6 @@
---- /dev/null	2025-10-22 09:05:38.904000181 +0000
-+++ /opt/openemr-7.0.3/openemr/src/Common/Auth/AuthSandstorm.php	2025-10-22 10:18:16.453322698 +0000
-@@ -0,0 +1,190 @@
+--- /dev/null	2025-11-10 05:13:38.390906557 +0000
++++ /opt/openemr-7.0.3/openemr/src/Common/Auth/AuthSandstorm.php	2025-11-10 11:29:05.325963868 +0000
+@@ -0,0 +1,232 @@
 +<?php
 +
 +/**
@@ -55,7 +55,11 @@
 +    /**
 +     * @var string
 +     */
-+    private $userId;
++    private $userIdString;
++    /**
++     * @var string
++     */
++    private $userIdBinary;
 +
 +
 +    public function __construct() {
@@ -66,7 +70,7 @@
 +     * Die if the user is anonymous
 +     */
 +    public function dieIfAnonymous() {
-+        if (empty($this->userId)) {
++        if (empty($this->userIdString)) {
 +            $this->dieWithMessage('Please Log In with Sandstorm to use Open-EMR');
 +        }
 +    }
@@ -92,12 +96,41 @@
 +    }
 +
 +    /**
++     * Return an array of the user's ARO groups using the Sandstorm permissions.
++     *
++     * Because Sandstorm's permission system is less capable than Open-EMR's,
++     * we pass roles via the permissions header.  Roles include:
++     *
++     *   - role:administrator -> 'Administrators'
++     *   - role:manager
++     *   - role:back office
++     *   - role:front office -> 'Front Office'
++     *   - role:clinician -> 'Clinicians'
++     * @return string[]
++     */
++    public function getAroGroupsWithSandstormPermissions() {
++        $result = array();
++        foreach ($this->permissions as $permission) {
++            if ($permission === 'role:administrator') {
++                array_push($result, 'Administrators');
++            } else if ($permission === 'role:manager') {
++            } else if ($permission === 'role:back office') {
++            } else if ($permission === 'role:front office') {
++                array_push($result, 'Front Office');
++            } else if ($permission === 'role:clinician') {
++                array_push($result, 'Clinicians');
++            }
++        }
++        return $result;
++    }
++
++    /**
 +     * Return the user's permissions as received from Sandstorm
 +     *
 +     * @return string[]
 +     */
 +    public function getPermissions() {
-+        return $this->displayName;
++        return $this->permissions;
 +    }
 +
 +    /**
@@ -155,12 +188,20 @@
 +    }
 +
 +    /**
++     * Return the user ID as a binary string
++     *
++     * @return string
++     */
++    public function getUserIdAsBinary() {
++        return $this->userIdBinary;
++    }
++    /**
 +     * Return the user ID as received from Sandstorm
 +     *
 +     * @return string
 +     */
-+    public function getUserId() {
-+        return $this->userId;
++    public function getUserIdAsString() {
++        return $this->userIdString;
 +    }
 +
 +    private function populateWithHeaders() {
@@ -188,6 +229,7 @@
 +        $this->sessionType = $headers['X-Sandstorm-Session-Type'];
 +        $this->sessionId = $headers['X-Sandstorm-Session-Id'];
 +        $this->tabId = $headers['X-Sandstorm-Tab-Id'];
-+        $this->userId = $headers['X-Sandstorm-User-Id'];
++        $this->userIdBinary = hex2bin($headers['X-Sandstorm-User-Id']);
++        $this->userIdString = $headers['X-Sandstorm-User-Id'];
 +    }
 +}

@@ -1,5 +1,5 @@
---- /opt/openemr-7.0.3/openemr/interface/usergroup/usergroup_admin.php.orig	2025-10-16 10:16:45.538284098 +0000
-+++ /opt/openemr-7.0.3/openemr/interface/usergroup/usergroup_admin.php	2025-10-22 18:29:09.888144206 +0000
+--- /opt/openemr-7.0.3/openemr/interface/usergroup/usergroup_admin.php.orig	2025-03-23 06:57:51.000000000 +0000
++++ /opt/openemr-7.0.3/openemr/interface/usergroup/usergroup_admin.php	2025-11-04 20:37:05.190079996 +0000
 @@ -343,49 +343,37 @@
          }
  
@@ -91,3 +91,11 @@
              );
              if (!empty($authUtilsNewPassword->getErrorMessage())) {
                  $alertmsg .= $authUtilsNewPassword->getErrorMessage();
+@@ -604,7 +591,6 @@
+     <div class="row">
+         <div class="col-12">
+             <div class="btn-group">
+-                <a href="usergroup_admin_add.php" class="medium_modal btn btn-secondary btn-add"><?php echo xlt('Add User'); ?></a>
+                 <a href="facility_user.php" class="btn btn-secondary btn-show"><?php echo xlt('View Facility Specific User Information'); ?></a>
+             </div>
+             <form name='userlist' method='post' style="display: inline;" class="form-inline" class="float-right" action='usergroup_admin.php' onsubmit='return top.restoreSession()'>

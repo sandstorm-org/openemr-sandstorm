@@ -1,3 +1,6 @@
+# Commands
+PATCH_CMD="patch --unified --backup --suffix .orig"
+
 # Directories, absolute or relative to this directory
 APP_DIR=/opt/app
 DOWNLOADS_DIR=${APP_DIR}/downloads
