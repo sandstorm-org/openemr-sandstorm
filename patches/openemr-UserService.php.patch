@@ -1,5 +1,5 @@
 --- /opt/openemr-7.0.3/openemr/src/Services/UserService.php.orig	2025-03-23 06:57:51.000000000 +0000
-+++ /opt/openemr-7.0.3/openemr/src/Services/UserService.php	2025-11-04 20:26:19.694079169 +0000
++++ /opt/openemr-7.0.3/openemr/src/Services/UserService.php	2025-11-12 10:36:29.047728893 +0000
 @@ -23,8 +23,6 @@
  
  class UserService
@@ -210,16 +210,16 @@
 +        ];
 +        $recordset = QueryUtils::sqlStatementThrowException($usersSql, $values, true);
 +        if ($recordset === FALSE) {
-+            $message = "UserService::createUserWithUserFormValuesAndHash: QueryUtils::sqlStatementThrowException(" . var_export($insertSql) . ", " . var_export($userFormValues) . ") failed.";
++            $message = "UserService::createUserWithUserFormValuesAndHash: QueryUtils::sqlStatementThrowException(" . var_export($usersSql) . ", " . var_export($values) . ") failed.";
 +            error_log($message);
 +            die($message);
 +        }
 +        $inserted = QueryUtils::getLastInsertId();
 +        if (!empty($inserted['user_id'])) {
-+            $userId = inserted['user_id'];
++            $userId = $inserted['user_id'];
 +        }
 +        if (empty($userId)) {
-+            $message = "UserService::createUserWithUserFormValuesAndHash: QueryUtils::sqlStatementThrowException(" . var_export($insertSql) . ", " . var_export($userFormValues) . ") return an inserted ID of \"" . ($userId === 0 ? '0' : ($userId === NULL ? 'NULL' : $userId)) . "\".";
++            $message = "UserService::createUserWithUserFormValuesAndHash: QueryUtils::sqlStatementThrowException(" . var_export($usersSql) . ", " . var_export($values) . ") return an inserted ID of \"" . ($userId === 0 ? '0' : ($userId === NULL ? 'NULL' : $userId)) . "\".";
 +            error_log($message);
 +            die($message);
 +        }
