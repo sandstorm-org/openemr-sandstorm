@@ -85,16 +85,20 @@ a2enmod rewrite
 a2dismod reqtimeout
 a2dismod status
 a2dissite 000-default
-rm ${APACHE_SITES_DIR}/openemr.conf
-${PATCH_CMD} ${APACHE_SITES_DIR}/openemr.conf ${PATCHES_DIR}/apache2-openemr.conf.patch
-${PATCH_CMD} ${APACHE_CONF_DIR}/global-server-name.conf ${PATCHES_DIR}/apache2-global-server-name.conf.patch
-${PATCH_CMD} ${APACHE_ETC_DIR}/ports.conf ${PATCHES_DIR}/apache2-ports.conf.patch
+[ -f "${APACHE_SITES_DIR}/openemr.conf" ] && rm "${APACHE_SITES_DIR}/openemr.conf"
+${PATCH_CMD} "${APACHE_SITES_DIR}/openemr.conf" "${PATCHES_DIR}/apache2-openemr.conf.patch"
+[ -f "${APACHE_CONF_DIR}/global-server-name.conf" ] && rm "${APACHE_CONF_DIR}/global-server-name.conf"
+${PATCH_CMD} "${APACHE_CONF_DIR}/global-server-name.conf" "${PATCHES_DIR}/apache2-global-server-name.conf.patch"
+[ -f "${APACHE_ETC_DIR}/ports.conf.orig" ] && mv "${APACHE_ETC_DIR}/ports.conf.orig" "${APACHE_ETC_DIR}/ports.conf"
+${PATCH_CMD} "${APACHE_ETC_DIR}/ports.conf" "${PATCHES_DIR}/apache2-ports.conf.patch"
 a2enconf global-server-name
 a2ensite openemr
 
 # Update MariaDB configuration
-${PATCH_CMD} ${MARIADB_HOME_DIR}/mariadb.cnf "${PATCHES_DIR}/mariadb-mariadb.cnf.patch"
-${PATCH_CMD} ${MARIADB_CONF_D_DIR}/50-server.cnf "${PATCHES_DIR}/mariadb-50-server.cnf.patch"
+[ -f "${MARIADB_HOME_DIR}/mariadb.cnf.orig" ] && mv "${MARIADB_HOME_DIR}/mariadb.cnf.orig" "${MARIADB_HOME_DIR}/mariadb.cnf"
+${PATCH_CMD} "${MARIADB_HOME_DIR}/mariadb.cnf" "${PATCHES_DIR}/mariadb-mariadb.cnf.patch"
+[ -f "${MARIADB_CONF_D_DIR}/50-server.cnf.orig" ] && mv "${MARIADB_CONF_D_DIR}/50-server.cnf.orig" "${MARIADB_CONF_D_DIR}/50-server.cnf"
+${PATCH_CMD} "${MARIADB_CONF_D_DIR}/50-server.cnf" "${PATCHES_DIR}/mariadb-50-server.cnf.patch"
 
 # Patch
 exit 0
