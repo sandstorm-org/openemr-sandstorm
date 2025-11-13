@@ -1,0 +1,184 @@
+--- /opt/openemr-7.0.3/openemr/library/dialog.js.orig	2025-10-25 10:00:59.127973147 +0000
++++ /opt/openemr-7.0.3/openemr/library/dialog.js	2025-10-25 10:07:47.096076666 +0000
+@@ -155,7 +155,7 @@
+     if (typeof window.xl !== 'function') {
+         (async (utilfn) => {
+             await includeScript(utilfn, 'script');
+-        })(top.webroot_url + '/library/js/utility.js')
++        })(oemrTop().webroot_url + '/library/js/utility.js')
+     }
+ }(typeof define == 'function' && define.amd ?
+     define :
+@@ -181,8 +181,8 @@
+         newx = 0;
+         newy = 0;
+     }
+-    if (typeof top.restoreSession === 'function') {
+-        top.restoreSession();
++    if (typeof oemrTop().restoreSession === 'function') {
++        oemrTop().restoreSession();
+     }
+ 
+     // MS IE version detection taken from
+@@ -207,7 +207,7 @@
+ // recursive window focus-event grabber
+ function grabfocus(w) {
+     for (var i = 0; i < w.frames.length; ++i) grabfocus(w.frames[i]);
+-    w.onfocus = top.imfocused;
++    w.onfocus = oemrTop().imfocused;
+ }
+ 
+ // Call this when a "modal" windowed dialog is desired.
+@@ -216,16 +216,17 @@
+ // Can now use anywhere to cascade natives...12/1/17 sjp
+ //
+ function dlgOpenWindow(url, winname, width, height) {
+-    if (top.modaldialog && !top.modaldialog.closed) {
+-        if (window.focus) top.modaldialog.focus();
+-        if (top.modaldialog.confirm(top.oemr_dialog_close_msg)) {
+-            top.modaldialog.close();
+-            top.modaldialog = null;
++    const topWindow = oemrTop();
++    if (topWindow.modaldialog && !topWindow.modaldialog.closed) {
++        if (window.focus) topWindow.modaldialog.focus();
++        if (topWindow.modaldialog.confirm(topWindow.oemr_dialog_close_msg)) {
++            topWindow.modaldialog.close();
++            topWindow.modaldialog = null;
+         } else {
+             return false;
+         }
+     }
+-    top.modaldialog = cascwin(url, winname, width, height,
++    topWindow.modaldialog = cascwin(url, winname, width, height,
+         "resizable=1,scrollbars=1,location=0,toolbar=0");
+ 
+     return false;
+@@ -304,22 +305,22 @@
+ // These functions may be called from scripts that may be out of scope with top so...
+ // if opener is tab then we need to be in tabs UI scope and while we're at it, let's bring webroot along...
+ //
+-if (typeof top.webroot_url === "undefined" && opener) {
++if (typeof oemrTop().webroot_url === "undefined" && opener) {
+     if (typeof opener.top.webroot_url !== "undefined") {
+-        top.webroot_url = opener.top.webroot_url;
++        oemrTop().webroot_url = opener.top.webroot_url;
+     }
+ }
+ // We'll need these if out of scope
+ //
+-if (typeof top.set_opener !== "function") {
++if (typeof oemrTop().set_opener !== "function") {
+     var opener_list = [];
+     /* eslint-disable-next-line no-inner-declarations */
+     function set_opener(window, opener) {
+-        top.opener_list[window] = opener;
++        oemrTop().opener_list[window] = opener;
+     }
+     /* eslint-disable-next-line no-inner-declarations */
+     function get_opener(window) {
+-        return top.opener_list[window];
++        return oemrTop().opener_list[window];
+     }
+ }
+ 
+@@ -366,17 +367,17 @@
+ 
+     const persistUserOption = function (option, value) {
+         return $.ajax({
+-            url: top.webroot_url + "/library/ajax/user_settings.php",
++            url: oemrTop().webroot_url + "/library/ajax/user_settings.php",
+             type: 'post',
+             contentType: 'application/x-www-form-urlencoded',
+             data: {
+-                csrf_token_form: top.csrf_token_js,
++                csrf_token_form: oemrTop().csrf_token_js,
+                 target: option,
+                 setting: value
+             },
+             beforeSend: function () {
+-                if (typeof top.restoreSession === 'function') {
+-                    top.restoreSession();
++                if (typeof oemrTop().restoreSession === 'function') {
++                    oemrTop().restoreSession();
+                 }
+             },
+             error: function (jqxhr, status, errorThrown) {
+@@ -403,7 +404,7 @@
+     /* eslint-disable-next-line no-inner-declarations */
+     function dlgclose(call, args) {
+         var frameName = window.name;
+-        var wframe = top;
++        var wframe = oemrTop();
+         if (frameName === "") {
+             // try to find dialog. dialogModal is embedded dialog class
+             // It has to be here somewhere.
+@@ -416,7 +417,7 @@
+                 }
+             }
+         }
+-        var dialogModal = top.$("div#" + frameName);
++        var dialogModal = wframe.$("div#" + frameName);
+ 
+         var removeFrame = dialogModal.find("iframe[name='" + frameName + "']");
+         if (removeFrame.length > 0) {
+@@ -451,8 +452,8 @@
+ * */
+ function dlgopen(url, winname, width, height, forceNewWindow, title, opts) {
+     // First things first...
+-    if (typeof top.restoreSession === 'function') {
+-        top.restoreSession();
++    if (typeof oemrTop().restoreSession === 'function') {
++        oemrTop().restoreSession();
+     }
+ 
+     // A matter of Legacy
+@@ -465,7 +466,7 @@
+     // seldom will this get used as more of U.I is moved to Bootstrap
+     // but better to continue than stop because of a dependency...
+     //
+-    let jqurl = top.webroot_url + '/public/assets/jquery/dist/jquery.min.js';
++    let jqurl = oemrTop().webroot_url + '/public/assets/jquery/dist/jquery.min.js';
+     if (typeof jQuery === 'undefined') {
+         (async (utilfn) => {
+             await includeScript(utilfn, 'script');
+@@ -474,9 +475,10 @@
+     jQuery(function () {
+         // Check for dependencies we will need.
+         // webroot_url is a global defined in main_screen.php or main.php.
+-        let bscss = top.webroot_url + '/public/assets/bootstrap/dist/css/bootstrap.min.css';
+-        let bscssRtl = top.webroot_url + '/public/assets/bootstrap-v4-rtl/dist/css/bootstrap-rtl.min.css';
+-        let bsurl = top.webroot_url + '/public/assets/bootstrap/dist/js/bootstrap.bundle.min.js';
++        const webroot_url = oemrTop().webroot_url;
++        let bscss = webroot_url + '/public/assets/bootstrap/dist/css/bootstrap.min.css';
++        let bscssRtl = webroot_url + '/public/assets/bootstrap-v4-rtl/dist/css/bootstrap-rtl.min.css';
++        let bsurl = webroot_url + '/public/assets/bootstrap/dist/js/bootstrap.bundle.min.js';
+ 
+         let version = jQuery.fn.jquery.split(' ')[0].split('.');
+         if ((version[0] < 2 && version[1] < 9) || (version[0] === 1 && version[1] === 9 && version[2] < 1)) {
+@@ -491,7 +493,7 @@
+             (async (utilfn) => {
+                 await includeScript(utilfn, 'link');
+             })(bscss);
+-            if (top.jsLanguageDirection == 'rtl') {
++            if (oemrTop().jsLanguageDirection == 'rtl') {
+                 (async (utilfn) => {
+                     await includeScript(utilfn, 'link');
+                 })(bscssRtl);
+@@ -530,7 +532,7 @@
+     opts.resolvePromiseOn = opts.resolvePromiseOn ?? 'init';
+     var mHeight, mWidth, mSize, msSize, dlgContainer, fullURL, where; // a growing list...
+ 
+-    where = (opts.type === 'iframe') ? top : window;
++    where = (opts.type === 'iframe') ? oemrTop() : window;
+ 
+     // get url straight...
+     fullURL = "";
+@@ -652,7 +654,7 @@
+     }
+ 
+     // let opener array know about us.
+-    top.set_opener(winname, window);
++    oemrTop().set_opener(winname, window);
+ 
+     // Write the completed template to calling document or 'where' window.
+     where.jQuery("body").append(dlgContainer);

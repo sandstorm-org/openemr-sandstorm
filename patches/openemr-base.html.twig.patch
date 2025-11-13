@@ -1,0 +1,10 @@
+--- /opt/openemr-7.0.3/openemr/templates/login/base.html.twig.orig	2025-10-25 09:59:14.958436033 +0000
++++ /opt/openemr-7.0.3/openemr/templates/login/base.html.twig	2025-10-25 09:59:19.586459895 +0000
+@@ -17,6 +17,7 @@
+ <!DOCTYPE html>
+ <html lang="en">
+ <head>
++    <script src="{{ webroot|attr }}/library/js/framed.js?v={{ assetVersion|attr_url }}"></script>
+     {% if displayGoogleSignin %}
+         {% include "login/partials/html/google_signin.html.twig" %}
+     {% endif %}

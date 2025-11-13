@@ -220,7 +220,7 @@
 +        if (!empty($permissionsString)) {
 +            $this->permissions = explode(',', $permissionsString);
 +        } else {
-+            $this->permissions = array(); 
++            $this->permissions = array();
 +        }
 +
 +        $this->pictureUrl = $headers['X-Sandstorm-User-Picture'];

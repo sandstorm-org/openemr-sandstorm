@@ -1,0 +1,29 @@
+--- /dev/null	2025-10-22 09:05:38.904000181 +0000
++++ /opt/openemr-7.0.3/openemr/library/js/framed.js	2025-10-25 09:43:11.547890275 +0000
+@@ -0,0 +1,26 @@
++/**
++ * Finding the top Open-EMR window when Open-EMR is used inside other frames.
++ */
++function oemrTop() {
++    const maxIterations = 10;
++
++    let current = window;
++    let i = 0;
++
++    while (i < maxIterations && current !== window.top) {
++        const parentWindow = current.parent;
++        try {
++            // This should throw an exception if the parent window has a different origin.
++            parentWindow.location.href;
++
++            // Same origin.
++        } catch (err) {
++            // Only return the current error if the cross-origin access threw a SecurityError.
++            if (err.name === 'SecurityError') {
++                return current;
++            }
++        }
++        current = parentWindow;
++    }
++    return current;
++}
