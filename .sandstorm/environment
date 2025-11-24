@@ -26,6 +26,7 @@ OPENEMR_OPT_DIR=/opt/${OPENEMR_ARCHIVE_DIR}
 OPENEMR_URL=https://downloads.sourceforge.net/project/openemr/OpenEMR%20Current/${OPENEMR_VERSION}/${OPENEMR_ARCHIVE}?viasf=1
 OPENEMR_DATABASE=openemr
 OPENEMR_DATABASE_USER=openemr
-USER=openemr
+OPENEMR_PATCHES_DIR=${PATCHES_DIR}/${OPENEMR_ARCHIVE_DIR}
+OPENEMR_PATCHES_DIR_REGEXP=s/^\\\/opt\\\/app\\\/patches\\\/openemr-7\.0\.3\\\///
 OPENEMR_USER=openemr
 OPENEMR_VAR_DIR=/var/${OPENEMR_ARCHIVE_DIR}

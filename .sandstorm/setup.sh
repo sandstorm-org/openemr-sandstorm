@@ -59,20 +59,15 @@ ln -s ${OPENEMR_VAR_DIR}/openemr/sites/default/sqlconf.php ${OPENEMR_OPT_DIR}/op
 rm -rf "${OPENEMR_OPT_DIR}/documents"
 mv ${OPENEMR_OPT_DIR}/openemr/sites/default/documents ${OPENEMR_OPT_DIR}/documents
 ln -s ${OPENEMR_VAR_DIR}/openemr/sites/default/documents ${OPENEMR_OPT_DIR}/openemr/sites/default/documents
+# Remove any artifacts of patching Open-EMR in the past
+rm -f ${OPENEMR_OPT_DIR}/openemr/src/Common/Auth/AuthSandstorm.php
 # Patch Open-EMR
-${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/library/auth.inc.php ${PATCHES_DIR}/openemr-auth.inc.php.patch
-rm ${OPENEMR_OPT_DIR}/openemr/src/Common/Auth/AuthSandstorm.php
-${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/src/Common/Auth/AuthSandstorm.php ${PATCHES_DIR}/openemr-AuthSandstorm.php.patch
-${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/src/Common/Auth/AuthUtils.php ${PATCHES_DIR}/openemr-AuthUtils.php.patch
-${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/interface/login/login.php ${PATCHES_DIR}/openemr-login.php.patch
-${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/interface/main/main_screen.php ${PATCHES_DIR}/openemr-main_screen.php.patch
-${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/interface/usergroup/user_admin.php ${PATCHES_DIR}/openemr-user_admin.php.patch
-${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/interface/usergroup/usergroup_admin.php ${PATCHES_DIR}/openemr-usergroup_admin.php.patch
-${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/interface/usergroup/usergroup_admin_add.php ${PATCHES_DIR}/openemr-usergroup_admin_add.php.patch
-${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/src/Services/UserService.php ${PATCHES_DIR}/openemr-UserService.php.patch
-${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/templates/login/login_core.html.twig ${PATCHES_DIR}/openemr-login_core.html.twig.patch
-${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/templates/login/layouts/vertical_box.html.twig ${PATCHES_DIR}/openemr-vertical_box.html.twig.patch
-${PATCH_CMD} ${OPENEMR_OPT_DIR}/openemr/templates/login/partials/html/login_details.html.twig ${PATCHES_DIR}/openemr-login_details.html.twig.patch
+echo sed -e ${OPENEMR_PATCHES_DIR_REGEXP}
+PATCH_TARGETS=$(find ${OPENEMR_PATCHES_DIR} -name "*.patch" | sed -e ${OPENEMR_PATCHES_DIR_REGEXP} -e s/\.patch$//)
+for TARGET in ${PATCH_TARGETS}; do
+	echo ${PATCH_CMD} "${OPENEMR_OPT_DIR}/${TARGET}" "${OPENEMR_PATCHES_DIR}/${TARGET}.patch"
+	${PATCH_CMD} "${OPENEMR_OPT_DIR}/${TARGET}" "${OPENEMR_PATCHES_DIR}/${TARGET}.patch"
+done
 
 # Stop and disable services.  Sandstorm will run them.
 systemctl stop apache2

@@ -1,5 +1,5 @@
 --- /opt/openemr-7.0.3/openemr/src/Services/UserService.php.orig	2025-03-23 06:57:51.000000000 +0000
-+++ /opt/openemr-7.0.3/openemr/src/Services/UserService.php	2025-11-12 10:36:29.047728893 +0000
++++ /opt/openemr-7.0.3/openemr/src/Services/UserService.php	2025-11-24 06:07:55.471351826 +0000
 @@ -23,8 +23,6 @@
  
  class UserService
@@ -54,7 +54,7 @@
          $sql .= "
                  FROM  users
                  LEFT JOIN list_options as abook ON abook.option_id = users.abook_type";
-@@ -383,4 +357,180 @@
+@@ -383,4 +357,177 @@
          }
          return $row;
      }
@@ -214,12 +214,9 @@
 +            error_log($message);
 +            die($message);
 +        }
-+        $inserted = QueryUtils::getLastInsertId();
-+        if (!empty($inserted['user_id'])) {
-+            $userId = $inserted['user_id'];
-+        }
++        $userId = QueryUtils::getLastInsertId();
 +        if (empty($userId)) {
-+            $message = "UserService::createUserWithUserFormValuesAndHash: QueryUtils::sqlStatementThrowException(" . var_export($usersSql) . ", " . var_export($values) . ") return an inserted ID of \"" . ($userId === 0 ? '0' : ($userId === NULL ? 'NULL' : $userId)) . "\".";
++            $message = "UserService::createUserWithUserFormValuesAndHash: QueryUtils::sqlStatementThrowException(" . var_export($usersSql) . ", " . var_export($values) . ") returned an inserted ID of \"" . ($userId === 0 ? '0' : ($userId === NULL ? 'NULL' : $userId)) . "\".";
 +            error_log($message);
 +            die($message);
 +        }
