@@ -212,13 +212,13 @@
 +        if ($recordset === FALSE) {
 +            $message = "UserService::createUserWithUserFormValuesAndHash: QueryUtils::sqlStatementThrowException(" . var_export($usersSql) . ", " . var_export($values) . ") failed.";
 +            error_log($message);
-+            die($message);
++            die("UserService::createUserWithUserFormValuesAndHash: Failed to create user record.");
 +        }
 +        $userId = QueryUtils::getLastInsertId();
 +        if (empty($userId)) {
 +            $message = "UserService::createUserWithUserFormValuesAndHash: QueryUtils::sqlStatementThrowException(" . var_export($usersSql) . ", " . var_export($values) . ") returned an inserted ID of \"" . ($userId === 0 ? '0' : ($userId === NULL ? 'NULL' : $userId)) . "\".";
 +            error_log($message);
-+            die($message);
++            die("UserService::createUserWithUserFormValuesAndHash: Failed to get new record ID.");
 +        }
 +
 +        // Insert the user into the `users_secure` table.
