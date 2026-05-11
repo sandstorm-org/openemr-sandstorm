@@ -95,5 +95,13 @@ ${PATCH_CMD} "${MARIADB_HOME_DIR}/mariadb.cnf" "${PATCHES_DIR}/mariadb-mariadb.c
 [ -f "${MARIADB_CONF_D_DIR}/50-server.cnf.orig" ] && mv "${MARIADB_CONF_D_DIR}/50-server.cnf.orig" "${MARIADB_CONF_D_DIR}/50-server.cnf"
 ${PATCH_CMD} "${MARIADB_CONF_D_DIR}/50-server.cnf" "${PATCHES_DIR}/mariadb-50-server.cnf.patch"
 
+# === Install custom API files ===
+# These files are served at /apis/ path, matching the apiPath setting
+# in sandstorm-pkgdef.capnp for Sandstorm HTTP API export.
+echo "Installing custom API files..."
+mkdir -p ${OPENEMR_OPT_DIR}/openemr/apis
+cp /opt/app/apis/get_available_slots.php ${OPENEMR_OPT_DIR}/openemr/apis/get_available_slots.php
+echo "Custom API files installed."
+
 # Patch
 exit 0
