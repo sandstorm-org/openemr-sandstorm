@@ -370,6 +370,37 @@ vagrant-spk pack ../openemr.spk
 └───────────────────────────────┘
 ```
 
+### API 端點測試流程 (產生與測試行事曆空檔)
+
+如果需要驗證 `get_available_slots.php` API 的邏輯，可以按照以下步驟建立測試資料並執行自動化測試：
+
+1. **產生測試排班資料**  
+   進入 Sandstorm Grain 內部執行 SQL 腳本，為三個測試醫生建立排班與佔用時段：
+   ```powershell
+   vagrant-spk enter-grain
+   # (依提示按下 Enter 選擇運行中的 grain)
+
+   # 在 grain 內部執行：
+   mysql -u openemr -popenemr openemr < /opt/app/sql/seed_test_schedules.sql
+   exit
+   ```
+
+2. **同步 PHP API 變更**  
+   沙盒啟動時會將 API 檔案複製過去。如果你在開發過程中修改了 `apis/get_available_slots.php`，必須手動同步到沙盒目錄中：
+   ```powershell
+   vagrant ssh -c "sudo cp /opt/app/apis/get_available_slots.php /opt/openemr-7.0.3/openemr/apis/get_available_slots.php"
+   ```
+
+3. **執行 TypeScript 測試客戶端**  
+   使用測試腳本來驗證 API 格式與時段過濾邏輯（需先從 UI 取得 Token）：
+   ```powershell
+   npx tsx test/api/test_http_api.ts `
+     --host "http://api-XXXXX.local.sandstorm.io:6090" `
+     --token "YOUR_API_TOKEN" `
+     --from "2026-05-11" `
+     --to "2026-05-16"
+   ```
+
 ### API 端點
 
 #### `GET /get_available_slots.php`

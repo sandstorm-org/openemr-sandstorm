@@ -31,11 +31,8 @@ function getArg(name: string, defaultValue = ""): string {
 
 const API_HOST = getArg("--host", "http://localhost:6090");
 const API_TOKEN = getArg("--token", "");
-const FROM_DATE = getArg("--from", new Date().toISOString().split("T")[0]);
-const TO_DATE = getArg(
-  "--to",
-  new Date(Date.now() + 7 * 86_400_000).toISOString().split("T")[0]
-);
+const FROM_DATE = getArg("--from", "2026-05-11");
+const TO_DATE = getArg("--to", "2026-05-14");
 
 // ── Types ──
 interface TimeSlot {
@@ -103,34 +100,42 @@ async function getAvailableSlots(
 }
 
 // ── Display Helpers ──
+// Formats "HH:MM:SS" → "HH:MM", ignoring seconds.
+function fmtTime(t: string): string {
+  return t.slice(0, 5);
+}
+
 function printSlotTable(slots: TimeSlot[]) {
   if (slots.length === 0) {
     console.log("  (no slots)");
     return;
   }
 
-  // Group by date
-  const grouped = new Map<string, TimeSlot[]>();
+  // Group by date → provider → sorted times
+  const byDate = new Map<string, Map<string, string[]>>();
   for (const slot of slots) {
-    const existing = grouped.get(slot.date) || [];
-    existing.push(slot);
-    grouped.set(slot.date, existing);
+    if (!byDate.has(slot.date)) {
+      byDate.set(slot.date, new Map());
+    }
+    const byProvider = byDate.get(slot.date)!;
+    if (!byProvider.has(slot.providerName)) {
+      byProvider.set(slot.providerName, []);
+    }
+    byProvider.get(slot.providerName)!.push(fmtTime(slot.startTime));
   }
 
-  for (const [date, daySlots] of grouped) {
-    console.log(`\n  📅 ${date} (${daySlots.length} slots)`);
-    // Show first 5 and last slot per day
-    const preview = daySlots.length > 6
-      ? [...daySlots.slice(0, 5), daySlots[daySlots.length - 1]]
-      : daySlots;
-
-    for (const s of preview) {
-      console.log(
-        `     ${s.startTime} - ${s.endTime} | ${s.providerName} | ${s.status}`
-      );
-    }
-    if (daySlots.length > 6) {
-      console.log(`     ... and ${daySlots.length - 6} more`);
+  for (const [date, byProvider] of byDate) {
+    console.log(`\n  📅 ${date}`);
+    for (const [providerName, times] of byProvider) {
+      const unique = [...new Set(times)];
+      // Chunk into rows of 8 so no times are lost to terminal-width overflow
+      const chunkSize = 8;
+      const firstChunk = unique.slice(0, chunkSize);
+      console.log(`     👨‍⚕️ ${providerName}: ${firstChunk.join(", ")}`);
+      for (let i = chunkSize; i < unique.length; i += chunkSize) {
+        const chunk = unique.slice(i, i + chunkSize);
+        console.log(`        ${" ".repeat(providerName.length + 2)}${chunk.join(", ")}`);
+      }
     }
   }
 }
