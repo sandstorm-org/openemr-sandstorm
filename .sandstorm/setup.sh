@@ -103,5 +103,15 @@ mkdir -p ${OPENEMR_OPT_DIR}/openemr/apis
 cp /opt/app/apis/get_available_slots.php ${OPENEMR_OPT_DIR}/openemr/apis/get_available_slots.php
 echo "Custom API files installed."
 
+# Fix top.xxx cross-origin issues in Sandstorm environment
+# Uses globalThis (ES2020) which cannot be shadowed by any variable name
+# (unlike 'window' or 'self' which are commonly used as parameter/local names)
+echo "Fixing top.xxx cross-origin issues with globalThis IIFE..."
+
+python3 /opt/app/.sandstorm/fix_top_refs.py
+
+echo "Cross-origin fix complete."
+
 # Patch
 exit 0
+

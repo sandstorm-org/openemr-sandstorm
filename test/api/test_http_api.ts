@@ -52,6 +52,17 @@ interface Provider {
   specialty: string;
 }
 
+interface CalendarEvent {
+  pc_eventDate: string;
+  pc_startTime: string;
+  pc_endTime: string;
+  pc_title: string;
+  pc_catid: number;
+  pc_aid: number;
+  ufname?: string;
+  ulname?: string;
+}
+
 interface ApiResponse {
   status: "success" | "error";
   message?: string;
@@ -63,8 +74,7 @@ interface ApiResponse {
   data?: {
     slots: TimeSlot[];
     providers: Provider[];
-    events: unknown[];
-    isMockData: boolean;
+    events: CalendarEvent[];
   };
 }
 
@@ -161,7 +171,6 @@ async function main() {
 
     const data = result.data!;
     console.log(`\n✅ Response status: ${result.status}`);
-    console.log(`   Mock data: ${data.isMockData ? "YES (no real schedules yet)" : "NO (real data)"}`);
     console.log(`   Providers: ${data.providers.length}`);
     console.log(`   Total slots: ${data.slots.length}`);
     console.log(`   Events: ${data.events.length}`);
@@ -177,6 +186,42 @@ async function main() {
     // Show slots preview
     console.log("\n🕐 Available Slots Preview:");
     printSlotTable(data.slots);
+
+    // Show events
+    if (data.events && data.events.length > 0) {
+      console.log("\n📅 Calendar Events:");
+      const sortedEvents = [...data.events].sort((a: any, b: any) => {
+        // Sort by event date
+        if (a.pc_eventDate !== b.pc_eventDate) {
+          return a.pc_eventDate.localeCompare(b.pc_eventDate);
+        }
+        // Sort by doctor name
+        const nameA = `${a.ufname ?? ""} ${a.ulname ?? ""}`.trim() || `Provider #${a.pc_aid}`;
+        const nameB = `${b.ufname ?? ""} ${b.ulname ?? ""}`.trim() || `Provider #${b.pc_aid}`;
+        if (nameA !== nameB) {
+          return nameA.localeCompare(nameB);
+        }
+        // Fallback to start time
+        return a.pc_startTime.localeCompare(b.pc_startTime);
+      });
+
+      let lastDate = "";
+      for (const e of sortedEvents as any) {
+        if (lastDate && e.pc_eventDate !== lastDate) {
+          console.log("  ──────────────────────────────────────────────────────────────────────────────────");
+        }
+        lastDate = e.pc_eventDate;
+
+        const docName = e.ufname || e.ulname
+          ? `${e.ufname ?? ""} ${e.ulname ?? ""}`.trim()
+          : `Provider #${e.pc_aid}`;
+        console.log(
+          `   📅 ${e.pc_eventDate} | 🕐 ${fmtTime(e.pc_startTime)} - ${fmtTime(e.pc_endTime)} | 👨‍⚕️ ${docName} | 🏷️ ${e.pc_title} (Cat: ${e.pc_catid})`
+        );
+      }
+    } else {
+      console.log("\n📅 Calendar Events: (none)");
+    }
 
     // Test 2: Fetch with provider filter (if providers exist)
     if (data.providers.length > 0) {

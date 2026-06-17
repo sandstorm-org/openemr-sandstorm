@@ -9,7 +9,7 @@ const pkgdef :Spk.PackageDefinition = (
   # The package definition. Note that the spk tool looks specifically for the
   # "pkgdef" constant.
 
-  id = "82y6e9r4x1dthq3xhu76dtakq7mm3rr1wvwfkx10w50g3k0521eh",
+  id = "71aunjx687akrc2kqamwkda7yh33a1m7tm89wvdf1t7n865y403h",
   # Your app ID is actually its public key. The private key was placed in
   # your keyring. All updates must be signed with the same key.
 
@@ -21,7 +21,7 @@ const pkgdef :Spk.PackageDefinition = (
 
     appVersion = 0,  # Increment this for every release.
 
-    appMarketingVersion = (defaultText = "7.0.3"),
+    appMarketingVersion = (defaultText = "7.0.3-patch1"),
     # Human-readable representation of appVersion. Should match the way you
     # identify versions of your app in documentation and marketing.
 
@@ -157,8 +157,8 @@ const pkgdef :Spk.PackageDefinition = (
   # You should review it later, before shipping your app.
 
   alwaysInclude = [
-    "opt/openemr-7.0.3",
-    "usr/share/mariadb/english"
+    "opt/openemr-7.0.3/openemr",
+    "usr/share/mysql/english"
   ],
   # Fill this list with more names of files or directories that should be
   # included in your package, even if not listed in sandstorm-files.list.
@@ -628,7 +628,30 @@ const pkgdef :Spk.PackageDefinition = (
         ),
       ],
     ),
-    apiPath = "",
+    powerboxApis = [
+      (
+        name = "openemr-available-slots",
+        displayInfo = (
+          title = (defaultText = "OpenEMR available appointment slots"),
+        ),
+        path = "/",
+        tag = (
+          # This must match the descriptor embedded in openemr-gateway-ui.
+          canonicalUrl = "https://apidata.googleusercontent.com/caldav/v2"
+        ),
+        permissions = [
+          false, # role:administrator
+          false, # role:manager
+          false, # role:back office
+          false, # role:front office
+          false, # role:clinician
+        ],
+      ),
+    ],
+    saveIdentityCaps = true,
+    # Required when exporting powerbox HTTP APIs via sandstorm-http-bridge.
+
+    apiPath = "/",
     # Apps can export an API to the world.  The API is to be used primarily by Javascript
     # code and native apps, so it can't serve out regular HTML to browsers.  If a request
     # comes in to your app's API, sandstorm-http-bridge will prefix the request's path with

@@ -30,14 +30,55 @@ $to_date   = isset($_GET['to'])   ? $_GET['to']   : date('Y-m-d', strtotime('+7 
 $provider  = isset($_GET['provider']) ? (int)$_GET['provider'] : null;
 
 try {
-    // ── 1. Fetch available slots using custom interval math logic ──
-    $allEvents = fetchAllEvents($from_date, $to_date);
-    $slotSizeSeconds = function_exists('getSlotSize') ? getSlotSize() : 900;
-    
+    // ── 1. Fetch active providers ──
+    $providerSql = "SELECT id, fname, lname, specialty FROM users WHERE authorized = 1 AND active = 1";
+    $providerParams = [];
+    if ($provider !== null) {
+        $providerSql .= " AND id = ?";
+        $providerParams[] = $provider;
+    }
+    $providerResult = sqlStatement($providerSql, $providerParams);
+    $providerList = [];
+    while ($row = sqlFetchArray($providerResult)) {
+        $providerList[] = [
+            'id'        => (int)$row['id'],
+            'firstName' => $row['fname'],
+            'lastName'  => $row['lname'],
+            'specialty' => $row['specialty'],
+        ];
+    }
+
+    // ── 2. Generate default 09:00-17:00 working hours on weekdays ──
     $working_hours = [];
-    $busy_periods = [];
+    $current = new DateTime($from_date);
+    $end     = new DateTime($to_date);
     
-    // Group events by date -> provider -> category
+    while ($current <= $end) {
+        $dateStr = $current->format('Y-m-d');
+        $dayOfWeek = (int)$current->format('N'); // 1=Mon, 7=Sun
+        
+        if ($dayOfWeek <= 5) { // Weekdays only
+            foreach ($providerList as $prov) {
+                $working_hours[$dateStr][$prov['id']][] = [
+                    'start' => '09:00:00',
+                    'end'   => '12:00:00',
+                    'providerName' => trim($prov['firstName'] . ' ' . $prov['lastName'])
+                ];
+                $working_hours[$dateStr][$prov['id']][] = [
+                    'start' => '13:00:00',
+                    'end'   => '17:00:00',
+                    'providerName' => trim($prov['firstName'] . ' ' . $prov['lastName'])
+                ];
+            }
+        }
+        $current->modify('+1 day');
+    }
+
+    // ── 3. Fetch all events and mark them as busy ──
+    $allEvents = fetchAllEvents($from_date, $to_date);
+    $slotSizeSeconds = 1800; // 30 minutes
+    
+    $busy_periods = [];
     foreach ($allEvents as $event) {
         $date = $event['pc_eventDate'];
         $provId = $event['uprovider_id'] ?? 0;
@@ -47,21 +88,12 @@ try {
             continue;
         }
 
-        if ($event['pc_catid'] == 2) {
-            // In Office (catid=2) defines working hour bounds
-            $working_hours[$date][$provId][] = [
+        // Exclude all events with non-zero duration as busy
+        if ($event['pc_startTime'] !== $event['pc_endTime']) {
+            $busy_periods[$date][$provId][] = [
                 'start' => $event['pc_startTime'],
-                'end'   => $event['pc_endTime'],
-                'providerName' => trim(($event['ufname'] ?? '') . (!empty($event['umname']) ? ' ' . $event['umname'] : '') . ' ' . ($event['ulname'] ?? ''))
+                'end'   => $event['pc_endTime']
             ];
-        } else {
-            // Everything else is considered busy (Lunch, OOO, appointments)
-            if ($event['pc_startTime'] !== $event['pc_endTime']) {
-                $busy_periods[$date][$provId][] = [
-                    'start' => $event['pc_startTime'],
-                    'end'   => $event['pc_endTime']
-                ];
-            }
         }
     }
     
@@ -114,33 +146,8 @@ try {
         return strcmp($a['startTime'], $b['startTime']);
     });
 
-    // ── 2. Fetch active providers ──
-    $providerSql = "SELECT id, fname, lname, specialty FROM users WHERE authorized = 1 AND active = 1";
-    $providerParams = [];
-    if ($provider !== null) {
-        $providerSql .= " AND id = ?";
-        $providerParams[] = $provider;
-    }
-    $providerResult = sqlStatement($providerSql, $providerParams);
-    $providerList = [];
-    while ($row = sqlFetchArray($providerResult)) {
-        $providerList[] = [
-            'id'        => (int)$row['id'],
-            'firstName' => $row['fname'],
-            'lastName'  => $row['lname'],
-            'specialty' => $row['specialty'],
-        ];
-    }
-
-    // ── 3. Fetch existing appointments/events ──
-    $events = fetchAllEvents($from_date, $to_date);
-
-    // ── 4. Generate mock available slots if real data is empty ──
-    // (Temporary: until real provider schedules are configured in OpenEMR)
-    $mockSlots = [];
-    if (empty($slots) && empty($events)) {
-        $mockSlots = generateMockSlots($from_date, $to_date, $providerList);
-    }
+    // ── 4. Fetch existing appointments/events ──
+    $events = $allEvents;
 
     $response = [
         "status"  => "success",
@@ -150,10 +157,9 @@ try {
             "provider"  => $provider,
         ],
         "data" => [
-            "slots"      => !empty($slots) ? $slots : $mockSlots,
+            "slots"      => $slots,
             "providers"  => $providerList,
             "events"     => $events,
-            "isMockData" => empty($slots) && empty($events),
         ],
     ];
 } catch (Exception $e) {
@@ -165,71 +171,3 @@ try {
 }
 
 echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-
-// ────────────────────────────────────────────────────────────────
-// Helper: generate mock available slots for testing purposes
-// ────────────────────────────────────────────────────────────────
-function generateMockSlots($from_date, $to_date, $providers) {
-    $slots = [];
-    $slotDurationMinutes = 30;
-
-    // Default mock provider if none exist in the database
-    if (empty($providers)) {
-        $providers = [
-            ['id' => 1, 'firstName' => 'Demo', 'lastName' => 'Doctor', 'specialty' => 'General'],
-        ];
-    }
-
-    $current = new DateTime($from_date);
-    $end     = new DateTime($to_date);
-
-    while ($current <= $end) {
-        $dayOfWeek = (int)$current->format('N'); // 1=Mon, 7=Sun
-
-        // Skip weekends
-        if ($dayOfWeek >= 6) {
-            $current->modify('+1 day');
-            continue;
-        }
-
-        foreach ($providers as $prov) {
-            // Morning slots: 09:00 - 12:00
-            $morningStart = 9;
-            $morningEnd   = 12;
-            for ($hour = $morningStart; $hour < $morningEnd; $hour++) {
-                for ($min = 0; $min < 60; $min += $slotDurationMinutes) {
-                    $slots[] = [
-                        'date'       => $current->format('Y-m-d'),
-                        'startTime'  => sprintf('%02d:%02d:00', $hour, $min),
-                        'endTime'    => date('H:i:s', mktime($hour, $min + $slotDurationMinutes, 0)),
-                        'duration'   => $slotDurationMinutes,
-                        'providerId' => $prov['id'],
-                        'providerName' => $prov['firstName'] . ' ' . $prov['lastName'],
-                        'status'     => 'available',
-                    ];
-                }
-            }
-
-            // Afternoon slots: 14:00 - 17:00
-            $afternoonStart = 14;
-            $afternoonEnd   = 17;
-            for ($hour = $afternoonStart; $hour < $afternoonEnd; $hour++) {
-                for ($min = 0; $min < 60; $min += $slotDurationMinutes) {
-                    $slots[] = [
-                        'date'       => $current->format('Y-m-d'),
-                        'startTime'  => sprintf('%02d:%02d:00', $hour, $min),
-                        'endTime'    => date('H:i:s', mktime($hour, $min + $slotDurationMinutes, 0)),
-                        'duration'   => $slotDurationMinutes,
-                        'providerId' => $prov['id'],
-                        'providerName' => $prov['firstName'] . ' ' . $prov['lastName'],
-                        'status'     => 'available',
-                    ];
-                }
-            }
-        }
-
-        $current->modify('+1 day');
-    }
-
-    return $slots;
-}

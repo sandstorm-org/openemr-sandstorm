@@ -25,12 +25,14 @@ USE openemr;
 -- ── Step 1: Insert Doctor users ──────────────────────────────
 INSERT IGNORE INTO users (id, username, fname, lname, specialty, active, authorized, facility_id, calendar)
 VALUES
-  (101, 'doctor_a', 'Alpha',  'Anderson', 'General Practice',  1, 1, 1, 1),
-  (102, 'doctor_l', 'Lima',   'Lawrence', 'Internal Medicine', 1, 1, 1, 1),
-  (103, 'doctor_k', 'Kappa',  'Kennedy',  'Pediatrics',        1, 1, 1, 1);
+  (101, 'doctor_a', 'Aliman', 'Ali', 'General Practice', 1, 1, 1, 1),
+  (102, 'doctor_g', 'Gulniza', 'Gu', 'Internal Medicine', 1, 1, 1, 1),
+  (103, 'doctor_s', 'Soyun', 'Lee', 'Pediatrics', 1, 1, 1, 1),
+  (104, 'doctor_k', 'Konrad', 'Kon', 'General Practice', 1, 1, 1, 1),
+  (105, 'doctor_a', 'Arnaud', 'Da', 'General Practice', 1, 1, 1, 1);
 
 -- ── Step 2: Clean up previous seed data ──────────────────────
-DELETE FROM openemr_postcalendar_events WHERE pc_aid IN (101, 102, 103);
+DELETE FROM openemr_postcalendar_events WHERE pc_aid IN (101, 102, 103, 104, 105);
 
 -- ── Step 3: Generate schedules via stored procedure ──────────
 DROP PROCEDURE IF EXISTS seed_schedules;
@@ -44,8 +46,8 @@ BEGIN
     DECLARE v_dow INT;
 
     -- Generate for the month of May 2026
-    SET v_date = '2026-05-01';
-    SET v_end_date = '2026-05-31';
+    SET v_date = '2026-05-17';
+    SET v_end_date = '2026-06-13';
 
     WHILE v_date <= v_end_date DO
         -- Convert MySQL DAYOFWEEK (1=Sun) to ISO (1=Mon..7=Sun)
@@ -54,13 +56,6 @@ BEGIN
         -- ── DOCTOR A (id=101): Mon-Fri, 09:00-17:00 ────────────
         IF v_dow BETWEEN 1 AND 5 THEN
 
-            -- In Office: 09:00-17:00
-            INSERT INTO openemr_postcalendar_events
-                (pc_catid, pc_aid, pc_pid, pc_title, pc_eventDate, pc_endDate,
-                 pc_startTime, pc_endTime, pc_duration, pc_recurrtype, pc_apptstatus, pc_facility, pc_multiple, pc_alldayevent, pc_time, pc_informant)
-            VALUES (2, 101, 0, 'In Office', v_date, v_date,
-                    '09:00:00', '17:00:00', 28800, 0, '-', 1, 0, 0, NOW(), 1);
-
             -- Lunch 12:00-13:00
             INSERT INTO openemr_postcalendar_events
                 (pc_catid, pc_aid, pc_pid, pc_title, pc_eventDate, pc_endDate,
@@ -68,33 +63,78 @@ BEGIN
             VALUES (8, 101, 0, 'Lunch', v_date, v_date,
                     '12:00:00', '13:00:00', 3600, 0, '-', 1, 0, 0, NOW(), 1);
 
-            -- Monday only: Out Of Office 14:00-16:00
+            -- Monday only: In Office 09:00-10:00
             IF v_dow = 1 THEN
                 INSERT INTO openemr_postcalendar_events
                     (pc_catid, pc_aid, pc_pid, pc_title, pc_eventDate, pc_endDate,
                      pc_startTime, pc_endTime, pc_duration, pc_recurrtype, pc_apptstatus, pc_facility, pc_multiple, pc_alldayevent, pc_time, pc_informant)
+                VALUES (2, 101, 0, 'In Office', v_date, v_date,
+                        '09:00:00', '10:00:00', 3600, 0, '-', 1, 0, 0, NOW(), 1);
+            END IF;
+
+            -- Tuesday only: Meeting 13:00-14:00
+            IF v_dow = 2 THEN
+                INSERT INTO openemr_postcalendar_events
+                    (pc_catid, pc_aid, pc_pid, pc_title, pc_eventDate, pc_endDate,
+                     pc_startTime, pc_endTime, pc_duration, pc_recurrtype, pc_apptstatus, pc_facility, pc_multiple, pc_alldayevent, pc_time, pc_informant)
+                VALUES (4, 101, 0, 'Meeting', v_date, v_date,
+                        '13:00:00', '14:00:00', 3600, 0, '-', 1, 0, 0, NOW(), 1);
+            END IF;
+
+            -- Wednesday only: Out Of Office 09:00-10:30
+            IF v_dow = 3 THEN
+                INSERT INTO openemr_postcalendar_events
+                    (pc_catid, pc_aid, pc_pid, pc_title, pc_eventDate, pc_endDate,
+                     pc_startTime, pc_endTime, pc_duration, pc_recurrtype, pc_apptstatus, pc_facility, pc_multiple, pc_alldayevent, pc_time, pc_informant)
                 VALUES (3, 101, 0, 'Out Of Office', v_date, v_date,
-                        '14:00:00', '16:00:00', 7200, 0, '-', 1, 0, 0, NOW(), 1);
+                        '09:00:00', '10:30:00', 5400, 0, '-', 1, 0, 0, NOW(), 1);
+            END IF;
+
+            -- Thursday only: Meeting 14:00-17:00
+            IF v_dow = 4 THEN
+                INSERT INTO openemr_postcalendar_events
+                    (pc_catid, pc_aid, pc_pid, pc_title, pc_eventDate, pc_endDate,
+                     pc_startTime, pc_endTime, pc_duration, pc_recurrtype, pc_apptstatus, pc_facility, pc_multiple, pc_alldayevent, pc_time, pc_informant)
+                VALUES (4, 101, 0, 'Meeting', v_date, v_date,
+                        '14:00:00', '17:00:00', 10800, 0, '-', 1, 0, 0, NOW(), 1);
+            END IF;
+
+            -- Random Fixed Patient appointments (Avoid lunch/meetings/OOO)
+            IF MOD(DAY(v_date), 2) = 0 THEN
+                IF v_dow = 3 THEN
+                    INSERT INTO openemr_postcalendar_events
+                        (pc_catid, pc_aid, pc_pid, pc_title, pc_eventDate, pc_endDate,
+                         pc_startTime, pc_endTime, pc_duration, pc_recurrtype, pc_apptstatus, pc_facility, pc_multiple, pc_alldayevent, pc_time, pc_informant)
+                    VALUES (9, 101, 1, 'Established Patient', v_date, v_date,
+                            '14:00:00', '15:00:00', 3600, 0, '-', 1, 0, 0, NOW(), 1);
+                ELSE
+                    INSERT INTO openemr_postcalendar_events
+                        (pc_catid, pc_aid, pc_pid, pc_title, pc_eventDate, pc_endDate,
+                         pc_startTime, pc_endTime, pc_duration, pc_recurrtype, pc_apptstatus, pc_facility, pc_multiple, pc_alldayevent, pc_time, pc_informant)
+                    VALUES (9, 101, 1, 'Established Patient', v_date, v_date,
+                            '10:00:00', '11:00:00', 3600, 0, '-', 1, 0, 0, NOW(), 1);
+                END IF;
+            END IF;
+
+            IF MOD(DAY(v_date), 3) = 1 THEN
+                IF v_dow = 4 THEN
+                    INSERT INTO openemr_postcalendar_events
+                        (pc_catid, pc_aid, pc_pid, pc_title, pc_eventDate, pc_endDate,
+                         pc_startTime, pc_endTime, pc_duration, pc_recurrtype, pc_apptstatus, pc_facility, pc_multiple, pc_alldayevent, pc_time, pc_informant)
+                    VALUES (9, 101, 2, 'Established Patient', v_date, v_date,
+                            '10:00:00', '11:00:00', 3600, 0, '-', 1, 0, 0, NOW(), 1);
+                ELSEIF v_dow != 2 THEN
+                    INSERT INTO openemr_postcalendar_events
+                        (pc_catid, pc_aid, pc_pid, pc_title, pc_eventDate, pc_endDate,
+                         pc_startTime, pc_endTime, pc_duration, pc_recurrtype, pc_apptstatus, pc_facility, pc_multiple, pc_alldayevent, pc_time, pc_informant)
+                    VALUES (9, 101, 2, 'Established Patient', v_date, v_date,
+                            '15:00:00', '16:00:00', 3600, 0, '-', 1, 0, 0, NOW(), 1);
+                END IF;
             END IF;
         END IF;
 
         -- ── DOCTOR L (id=102): Mon, Tue, Thu, 09:00-17:00 ─────
         IF v_dow IN (1, 2, 4) THEN
-
-            INSERT INTO openemr_postcalendar_events
-                (pc_catid, pc_aid, pc_pid, pc_title, pc_eventDate, pc_endDate,
-                 pc_startTime, pc_endTime, pc_duration, pc_recurrtype, pc_apptstatus, pc_facility, pc_multiple, pc_alldayevent, pc_time, pc_informant)
-            VALUES (2, 102, 0, 'In Office', v_date, v_date,
-                    '09:00:00', '17:00:00', 28800, 0, '-', 1, 0, 0, NOW(), 1);
-
-            -- Thursday only: Established Patient 10:00-11:00
-            IF v_dow = 4 THEN
-                INSERT INTO openemr_postcalendar_events
-                    (pc_catid, pc_aid, pc_pid, pc_title, pc_eventDate, pc_endDate,
-                     pc_startTime, pc_endTime, pc_duration, pc_recurrtype, pc_apptstatus, pc_facility, pc_multiple, pc_alldayevent, pc_time, pc_informant)
-                VALUES (9, 102, 0, 'Established Patient', v_date, v_date,
-                        '10:00:00', '11:00:00', 3600, 0, '-', 1, 0, 0, NOW(), 1);
-            END IF;
 
             -- Lunch 12:00-13:00
             INSERT INTO openemr_postcalendar_events
@@ -102,23 +142,74 @@ BEGIN
                  pc_startTime, pc_endTime, pc_duration, pc_recurrtype, pc_apptstatus, pc_facility, pc_multiple, pc_alldayevent, pc_time, pc_informant)
             VALUES (8, 102, 0, 'Lunch', v_date, v_date,
                     '12:00:00', '13:00:00', 3600, 0, '-', 1, 0, 0, NOW(), 1);
+
+            -- Tuesday only: Meeting 13:00-14:00
+            IF v_dow = 2 THEN
+                INSERT INTO openemr_postcalendar_events
+                    (pc_catid, pc_aid, pc_pid, pc_title, pc_eventDate, pc_endDate,
+                     pc_startTime, pc_endTime, pc_duration, pc_recurrtype, pc_apptstatus, pc_facility, pc_multiple, pc_alldayevent, pc_time, pc_informant)
+                VALUES (4, 102, 0, 'Meeting', v_date, v_date,
+                        '13:00:00', '14:00:00', 3600, 0, '-', 1, 0, 0, NOW(), 1);
+            END IF;
+
+            -- Random Fixed Patient appointments
+            IF MOD(DAY(v_date), 2) = 0 THEN
+                INSERT INTO openemr_postcalendar_events
+                    (pc_catid, pc_aid, pc_pid, pc_title, pc_eventDate, pc_endDate,
+                     pc_startTime, pc_endTime, pc_duration, pc_recurrtype, pc_apptstatus, pc_facility, pc_multiple, pc_alldayevent, pc_time, pc_informant)
+                VALUES (9, 102, 3, 'Established Patient', v_date, v_date,
+                        '14:00:00', '15:00:00', 3600, 0, '-', 1, 0, 0, NOW(), 1);
+            END IF;
+
+            IF MOD(DAY(v_date), 3) = 1 THEN
+                INSERT INTO openemr_postcalendar_events
+                    (pc_catid, pc_aid, pc_pid, pc_title, pc_eventDate, pc_endDate,
+                     pc_startTime, pc_endTime, pc_duration, pc_recurrtype, pc_apptstatus, pc_facility, pc_multiple, pc_alldayevent, pc_time, pc_informant)
+                VALUES (9, 102, 4, 'Established Patient', v_date, v_date,
+                        '10:00:00', '11:00:00', 3600, 0, '-', 1, 0, 0, NOW(), 1);
+            END IF;
+        ELSEIF v_dow IN (3, 5) THEN
+            -- Out Of Office 09:00-17:00 (Not working days)
+            INSERT INTO openemr_postcalendar_events
+                (pc_catid, pc_aid, pc_pid, pc_title, pc_eventDate, pc_endDate,
+                 pc_startTime, pc_endTime, pc_duration, pc_recurrtype, pc_apptstatus, pc_facility, pc_multiple, pc_alldayevent, pc_time, pc_informant)
+            VALUES (3, 102, 0, 'Out Of Office', v_date, v_date,
+                    '09:00:00', '17:00:00', 28800, 0, '-', 1, 0, 0, NOW(), 1);
         END IF;
 
-        -- ── DOCTOR K (id=103): Wed, Thu, Fri, 09:00-15:00 ─────
+        -- ── DOCTOR K (id=103): Wed, Thu, Fri, 09:00-12:00 ─────
         IF v_dow IN (3, 4, 5) THEN
 
+            -- Out Of Office 12:00-17:00 (Not working in the afternoon)
             INSERT INTO openemr_postcalendar_events
                 (pc_catid, pc_aid, pc_pid, pc_title, pc_eventDate, pc_endDate,
                  pc_startTime, pc_endTime, pc_duration, pc_recurrtype, pc_apptstatus, pc_facility, pc_multiple, pc_alldayevent, pc_time, pc_informant)
-            VALUES (2, 103, 0, 'In Office', v_date, v_date,
-                    '09:00:00', '15:00:00', 21600, 0, '-', 1, 0, 0, NOW(), 1);
+            VALUES (3, 103, 0, 'Out Of Office', v_date, v_date,
+                    '12:00:00', '17:00:00', 18000, 0, '-', 1, 0, 0, NOW(), 1);
 
-            -- Lunch 12:00-13:00
+            -- Random Fixed Patient appointments
+            IF MOD(DAY(v_date), 2) = 0 THEN
+                INSERT INTO openemr_postcalendar_events
+                    (pc_catid, pc_aid, pc_pid, pc_title, pc_eventDate, pc_endDate,
+                     pc_startTime, pc_endTime, pc_duration, pc_recurrtype, pc_apptstatus, pc_facility, pc_multiple, pc_alldayevent, pc_time, pc_informant)
+                VALUES (9, 103, 5, 'Established Patient', v_date, v_date,
+                        '10:00:00', '11:00:00', 3600, 0, '-', 1, 0, 0, NOW(), 1);
+            END IF;
+
+            IF MOD(DAY(v_date), 3) = 1 THEN
+                INSERT INTO openemr_postcalendar_events
+                    (pc_catid, pc_aid, pc_pid, pc_title, pc_eventDate, pc_endDate,
+                     pc_startTime, pc_endTime, pc_duration, pc_recurrtype, pc_apptstatus, pc_facility, pc_multiple, pc_alldayevent, pc_time, pc_informant)
+                VALUES (9, 103, 6, 'Established Patient', v_date, v_date,
+                        '11:00:00', '12:00:00', 3600, 0, '-', 1, 0, 0, NOW(), 1);
+            END IF;
+        ELSEIF v_dow IN (1, 2) THEN
+            -- Out Of Office 09:00-17:00 (Not working days)
             INSERT INTO openemr_postcalendar_events
                 (pc_catid, pc_aid, pc_pid, pc_title, pc_eventDate, pc_endDate,
                  pc_startTime, pc_endTime, pc_duration, pc_recurrtype, pc_apptstatus, pc_facility, pc_multiple, pc_alldayevent, pc_time, pc_informant)
-            VALUES (8, 103, 0, 'Lunch', v_date, v_date,
-                    '12:00:00', '13:00:00', 3600, 0, '-', 1, 0, 0, NOW(), 1);
+            VALUES (3, 103, 0, 'Out Of Office', v_date, v_date,
+                    '09:00:00', '17:00:00', 28800, 0, '-', 1, 0, 0, NOW(), 1);
         END IF;
 
         SET v_date = DATE_ADD(v_date, INTERVAL 1 DAY);

@@ -3,8 +3,10 @@ downloads/*.tar.gz
 
 # Ignore Vagrant's working files
 .sandstorm/.vagrant
+.sandstorm/sandstorm-files.list
 
 # Vagrant sometimes generates log files:
 *.log
 
 plan-history/*
+*.spk
