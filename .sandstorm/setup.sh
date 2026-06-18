@@ -101,6 +101,7 @@ ${PATCH_CMD} "${MARIADB_CONF_D_DIR}/50-server.cnf" "${PATCHES_DIR}/mariadb-50-se
 echo "Installing custom API files..."
 mkdir -p ${OPENEMR_OPT_DIR}/openemr/apis
 cp /opt/app/apis/get_available_slots.php ${OPENEMR_OPT_DIR}/openemr/apis/get_available_slots.php
+cp /opt/app/apis/confirm_appointment.php ${OPENEMR_OPT_DIR}/openemr/apis/confirm_appointment.php
 echo "Custom API files installed."
 
 # Fix top.xxx cross-origin issues in Sandstorm environment
@@ -114,4 +115,3 @@ echo "Cross-origin fix complete."
 
 # Patch
 exit 0
-

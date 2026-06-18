@@ -33,6 +33,8 @@ const API_HOST = getArg("--host", "http://localhost:6090");
 const API_TOKEN = getArg("--token", "");
 const FROM_DATE = getArg("--from", "2026-05-11");
 const TO_DATE = getArg("--to", "2026-05-14");
+const RUN_CONFIRM = process.argv.includes("--confirm");
+const SKIP_CONFIRM_PROBE = process.argv.includes("--skip-confirm-probe");
 
 // ── Types ──
 interface TimeSlot {
@@ -78,6 +80,16 @@ interface ApiResponse {
   };
 }
 
+interface ConfirmAppointmentResponse {
+  status: "success" | "error";
+  code?: string;
+  message?: string;
+  data?: {
+    eventId: number;
+    appointmentReference: string;
+  };
+}
+
 // ── API Client ──
 async function getAvailableSlots(
   from: string,
@@ -107,6 +119,123 @@ async function getAvailableSlots(
   }
 
   return (await response.json()) as ApiResponse;
+}
+
+async function probeConfirmEndpoint(): Promise<void> {
+  const url = `${API_HOST}/apis/confirm_appointment.php`;
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+  };
+  if (API_TOKEN) {
+    headers["Authorization"] = `Bearer ${API_TOKEN}`;
+  }
+
+  console.log(`\nPOST ${url} (non-mutating endpoint probe)`);
+  const response = await fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({}),
+  });
+  const body = await response.text();
+
+  if (response.status === 404) {
+    throw new Error(
+      [
+        "confirm_appointment.php is not installed in the OpenEMR grain.",
+        "Rebuild or manually sync openemr-sandstorm/apis/confirm_appointment.php into /opt/openemr-7.0.3/openemr/apis/ before packing/uploading.",
+        body.slice(0, 500),
+      ].join("\n"),
+    );
+  }
+
+  if (response.status !== 400) {
+    throw new Error(
+      `Expected confirm endpoint probe to return HTTP 400 for an empty body, got ${response.status} ${response.statusText}\n${body.slice(0, 500)}`,
+    );
+  }
+
+  const payload = JSON.parse(body) as ConfirmAppointmentResponse;
+  if (payload.status !== "error") {
+    throw new Error(`Unexpected confirm endpoint probe response: ${body}`);
+  }
+
+  console.log("Confirm endpoint is installed and reachable.");
+}
+
+function confirmAppointmentBody(slot: TimeSlot) {
+  return {
+    slot: {
+      date: slot.date,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      duration: slot.duration,
+      providerId: slot.providerId,
+    },
+    appointmentInformation: {
+      person: {
+        firstName: "Sandstorm",
+        lastName: "Test",
+        dateOfBirth: "1990-01-02",
+      },
+      reasonForAppointment: "HTTP API confirmation test",
+    },
+    preferences: {
+      languages: ["en"],
+      doctorGender: "any",
+    },
+  };
+}
+
+async function postConfirmAppointment(slot: TimeSlot): Promise<Response> {
+  const url = `${API_HOST}/apis/confirm_appointment.php`;
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+  };
+  if (API_TOKEN) {
+    headers["Authorization"] = `Bearer ${API_TOKEN}`;
+  }
+
+  console.log(`\nPOST ${url}`);
+  return fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(confirmAppointmentBody(slot)),
+  });
+}
+
+async function confirmAppointment(
+  slot: TimeSlot,
+): Promise<ConfirmAppointmentResponse> {
+  const response = await postConfirmAppointment(slot);
+  const body = await response.text();
+  if (!response.ok) {
+    throw new Error(
+      `HTTP ${response.status} ${response.statusText}\n${body.slice(0, 500)}`,
+    );
+  }
+
+  return JSON.parse(body) as ConfirmAppointmentResponse;
+}
+
+async function expectConfirmConflict(slot: TimeSlot): Promise<void> {
+  const response = await postConfirmAppointment(slot);
+  const body = await response.text();
+  if (response.status !== 409) {
+    throw new Error(
+      `Expected duplicate confirmation to return HTTP 409, got ${response.status}\n${body.slice(0, 500)}`,
+    );
+  }
+
+  const payload = JSON.parse(body) as ConfirmAppointmentResponse;
+  if (payload.code !== "slot_unavailable") {
+    throw new Error(
+      `Expected slot_unavailable conflict code, got ${payload.code}`,
+    );
+  }
+
+  console.log("Duplicate slot confirmation returned 409 slot_unavailable.");
 }
 
 // ── Display Helpers ──
@@ -160,6 +289,11 @@ async function main() {
   console.log(`  Range: ${FROM_DATE} → ${TO_DATE}`);
 
   try {
+    if (!SKIP_CONFIRM_PROBE) {
+      console.log("\n--- Test 0: Confirm endpoint preflight ---");
+      await probeConfirmEndpoint();
+    }
+
     // Test 1: Fetch all available slots
     console.log("\n─── Test 1: Fetch all available slots ───");
     const result = await getAvailableSlots(FROM_DATE, TO_DATE);
@@ -249,4 +383,66 @@ async function main() {
   }
 }
 
-main();
+async function runConfirmScenario() {
+  if (!RUN_CONFIRM) {
+    console.log(
+      "\nConfirm test skipped. Pass --confirm to create a calendar event.",
+    );
+    return;
+  }
+
+  console.log("\n--- Confirm Scenario: Create one OpenEMR calendar event ---");
+  const result = await getAvailableSlots(FROM_DATE, TO_DATE);
+  if (result.status !== "success" || !result.data) {
+    throw new Error(
+      `Unable to fetch slots for confirm scenario: ${result.message}`,
+    );
+  }
+
+  const targetSlot = result.data.slots[0];
+  if (!targetSlot) {
+    throw new Error("No available slot found for confirmation test.");
+  }
+
+  const confirmation = await confirmAppointment(targetSlot);
+  if (confirmation.status !== "success" || !confirmation.data) {
+    throw new Error(
+      `Unexpected confirmation response: ${JSON.stringify(confirmation)}`,
+    );
+  }
+  if (!confirmation.data.appointmentReference.startsWith("OE-")) {
+    throw new Error(
+      `Expected appointmentReference to start with OE-, got ${confirmation.data.appointmentReference}`,
+    );
+  }
+
+  console.log(
+    `Confirmed ${targetSlot.date} ${targetSlot.startTime} with ${confirmation.data.appointmentReference}`,
+  );
+
+  const afterConfirm = await getAvailableSlots(
+    targetSlot.date,
+    targetSlot.date,
+    targetSlot.providerId,
+  );
+  const stillAvailable = afterConfirm.data?.slots.some(
+    (slot) =>
+      slot.date === targetSlot.date &&
+      slot.startTime === targetSlot.startTime &&
+      slot.endTime === targetSlot.endTime &&
+      slot.providerId === targetSlot.providerId,
+  );
+  if (stillAvailable) {
+    throw new Error("Confirmed slot still appears in available slots.");
+  }
+
+  await expectConfirmConflict(targetSlot);
+  console.log("Confirm scenario passed.");
+}
+
+main()
+  .then(runConfirmScenario)
+  .catch((err) => {
+    console.error("\nConfirm scenario error:", err);
+    process.exit(1);
+  });

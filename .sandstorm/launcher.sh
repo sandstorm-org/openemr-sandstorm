@@ -125,6 +125,9 @@ if [ "${HAS_DATABASE}" = "NO" ]; then
 	[ $? = 0 ] && echo "Sandstorm tables created."
 fi
 
+/usr/bin/mysql "--user=${OPENEMR_DATABASE_USER}" "${OPENEMR_DATABASE}" < "${SQL_DIR}/sandstorm_calendar_category.sql"
+[ $? = 0 ] && echo "Sandstorm calendar category migration applied."
+
 # Apache 2 HTTP server wants our user to have a username.
 # Create temporary passwd and group databases.
 EGID=$(getegid)

@@ -19,9 +19,9 @@ const pkgdef :Spk.PackageDefinition = (
 
     appTitle = (defaultText = "Open-EMR"),
 
-    appVersion = 0,  # Increment this for every release.
+    appVersion = 2,  # Increment this for every release.
 
-    appMarketingVersion = (defaultText = "7.0.3-patch1"),
+    appMarketingVersion = (defaultText = "7.0.3-patch2"),
     # Human-readable representation of appVersion. Should match the way you
     # identify versions of your app in documentation and marketing.
 
@@ -158,6 +158,8 @@ const pkgdef :Spk.PackageDefinition = (
 
   alwaysInclude = [
     "opt/openemr-7.0.3/openemr",
+    "opt/app/apis",
+    "opt/app/sql/sandstorm_calendar_category.sql",
     "usr/share/mysql/english"
   ],
   # Fill this list with more names of files or directories that should be
